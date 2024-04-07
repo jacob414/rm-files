@@ -1,0 +1,6 @@
+* rm-files
+
+An experiment with the line files for the remarkable tablet. The
+stretch goal is to be able to convert a .SVG file to a .rm
+file. Preferably also with the ability to insert it into the tablets
+file system.
