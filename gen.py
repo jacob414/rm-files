@@ -27,4 +27,3 @@ layer.add_stroke(stroke)
 
 # Save the scene to a file named 'sample-output.rm'
 scene.save('sample-output.rm')
-

@@ -234,3 +234,38 @@ ImportError: cannot import name 'Scene' from 'rmscene' (/Users/jacob/src/oss/rm-
 rm-files $
 #+END_SRC
 
+** Claude
+
+I apologize for the confusion. It seems that the rmscene library has changed its API since my knowledge cutoff. Let me update the code to use the correct imports based on the current version of rmscene.
+
+Here's the updated code:
+
+python
+#+BEGIN_SRC 
+from rmscene.scene import Scene
+from rmscene.stroke import Stroke
+from rmscene.pen import Pen
+
+scene = Scene()
+
+pen = Pen()
+stroke = Stroke(pen)
+stroke.add_points([(0, 0), (100, 100), (200, 200)])
+
+scene.add_stroke(stroke)
+
+with open("sample-output.rm", "wb") as f:
+    f.write(scene.serialize())
+#+END_SRC
+
+/(NB: Claude immediataly forgot the name I wished for to be the sample output file's name)/
+
+In this updated code:
+
+    We import =Scene= from =rmscene.scene= instead of =rmscene=.
+    We import =Stroke= from =rmscene.stroke= instead of =rmscene=.
+    We import =Pen= from =rmscene.pen= instead of =rmscene=.
+
+The rest of the code remains the same. This should resolve the ImportError you encountered.
+
+Please try running the updated code and let me know if you have any further issues.
