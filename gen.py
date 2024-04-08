@@ -1,29 +1,24 @@
-from rmscene import Scene, Stroke, Pen
+from rmscene import Scene, Notebook
+import numpy as np
 
 # Create a new scene
-scene = Scene()
+scene = Scene(1404, 1872)
 
-# Define the rectangle coordinates
-x1, y1 = 100, 100
-x2, y2 = 400, 300
+# Create a simple geometric figure (e.g., a square)
+square_points = np.array([
+    [100, 100],
+    [100, 200],
+    [200, 200],
+    [200, 100],
+    [100, 100]
+])
 
-# Create a new layer
-layer = scene.add_layer()
+# Add the square to the scene
+scene.add_stroke(square_points, 0, 2)
 
-# Create a pen with default settings
-pen = Pen()
+# Create a new notebook with the scene
+notebook = Notebook()
+notebook.add_scene(scene)
 
-# Create a stroke for the rectangle
-stroke = Stroke([
-    (x1, y1),
-    (x2, y1),
-    (x2, y2),
-    (x1, y2),
-    (x1, y1)
-], pen)
-
-# Add the stroke to the layer
-layer.add_stroke(stroke)
-
-# Save the scene to a file named 'sample-output.rm'
-scene.save('sample-output.rm')
+# Save the notebook to a file
+notebook.save("sample-notebook.rm")
