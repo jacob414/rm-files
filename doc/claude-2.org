@@ -122,13 +122,12 @@ Feel free to paste the initial hexdump section whenever you're ready. We'll take
 Ok, here are the first 256 bytes then:
 
 #+BEGIN_SRC shell
-(.venv) (base) zipfly:~/src/oss/rm-files main
-rm-files $ cat scribbles.hex | cat scribbles.hex | head -c 256
-0000000 6572 614d 6b72 6261 656c 2e20 696c 656e
-0000010 2073 6966 656c 202c 6576 7372 6f69 3d6e
-0000020 2036 2020 2020 2020 2020 1920 0000 0000
-0000030 0101 0109 130c 0000 1000 05b2 a1a8 ae44
-0000040 0654 79b8 79a0 c779 2b9a 0001 0007 0000
+  rm-files $ cat scribbles.hex | head -c 256
+  0000000 6572 614d 6b72 6261 656c 2e20 696c 656e
+  0000010 2073 6966 656c 202c 6576 7372 6f69 3d6e
+  0000020 2036 2020 2020 2020 2020 1920 0000 0000
+  0000030 0101 0109 130c 0000 1000 05b2 a1a8 ae44
+  0000040 0654 79b8 79a0 c779 2b9a 0001 0007 0000
 #+END_SRC
 
 ** Claude
