@@ -5,10 +5,10 @@ stretch goal is to be able to convert a .SVG file to a .rm
 file. Preferably also with the ability to insert it into the tablets
 file system.
 
-** Claude 3 Opus experiment
+** +Claude 3 Opus experiment+ GPT-4 experiment
 
-This is going to be a dual purpose project, I'm going to see how far I
++This is going to be a dual purpose project, I'm going to see how far I
 can get with AI code generation and assisted development, and add the
 corresponding docs (hopefully). If you see some unsavoury code,
-remember, it's probably Claude, not me! ;-)
+remember, it's probably +Claude+ GPT-4, not me! ;-)
 
