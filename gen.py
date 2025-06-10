@@ -1,74 +1,125 @@
-import struct
-from io import BytesIO
-from rmscene import (
-    TaggedBlockWriter,
+from rmscene import write_blocks, LwwValue
+from rmscene import scene_items as si
+from rmscene.crdt_sequence import CrdtSequenceItem
+from rmscene.scene_stream import (
     SceneTreeBlock,
-    SceneLineItemBlock,
-    MigrationInfoBlock,
-    PageInfoBlock,
-    RootTextBlock,
     TreeNodeBlock,
-    CrdtId,
-    LwwValue,
-    write_blocks,
+    SceneGroupItemBlock,
+    SceneLineItemBlock,
 )
-from rmscene.tagged_block_common import HEADER_V6
-from uuid import UUID
-from rmscene.scene_items import Group, Text, ParagraphStyle, Line, Point
+from rmscene.tagged_block_common import CrdtId
 
-# Define a simple line with two points
-def create_simple_line():
-    return Line(
-        points=[
-            Point(x=0, y=0, speed=0, width=0, pressure=0.5),
-            Point(x=100, y=100, speed=0, width=0, pressure=0.5)
-        ],
-        pen_type=1,  # Assuming pen type 1 is valid
-        color=0,  # Assuming color 0 is black
-        unknown_line_attribute=0  # Placeholder for any unknown or additional attributes
-    )
 
-def main():
-    filename = 'sample-notebook.rm'
-    line = create_simple_line()
+# Funktion för att generera unika IDs
+def get_next_id():
+    n = 2  # Börja från 2 eftersom 1 används för root
+    while True:
+        yield CrdtId(0, n)
+        n += 1
 
-    with open(filename, 'wb') as f:
-        writer = TaggedBlockWriter(f)
 
-        # Write the header
-        f.write(HEADER_V6)
+id_generator = get_next_id()
 
-        # Create and write a simple scene with one line
-        blocks = [
-            MigrationInfoBlock(migration_id=CrdtId(1, 1), is_device=True),
-            PageInfoBlock(loads_count=1, merges_count=0, text_chars_count=0, text_lines_count=1),
-            SceneTreeBlock(
-                tree_id=CrdtId(0, 1),
-                node_id=CrdtId(0, 0),
-                is_update=True,
-                parent_id=CrdtId(0, 0),
-            ),
-            RootTextBlock(
-                block_id=CrdtId(0, 0),
-                value=Text(
-                    items=[],
-                    styles={},
-                    pos_x=0,
-                    pos_y=0,
-                    width=0,
-                ),
-            ),
-            TreeNodeBlock(
-                group=Group(node_id=CrdtId(0, 0)),
-            ),
-            SceneLineItemBlock(
-                parent_id=CrdtId(0, 0),
-                item=line,
-            ),
-        ]
+# Root node ID
+root_id = CrdtId(0, 1)  # Root node ID
 
-        # Write the blocks to the file
-        write_blocks(f, blocks, options={"version": "3.0"})
+# Skapa root node som en Group
+root_group = si.Group(node_id=root_id)
 
-if __name__ == '__main__':
-    main()
+# Skapa ett lager (Group)
+layer_id = next(id_generator)
+layer_label_id = next(id_generator)
+layer_label = LwwValue(timestamp=layer_label_id, value="Layer 1")
+layer = si.Group(node_id=layer_id,
+                 label=layer_label,
+                 visible=LwwValue(timestamp=next(id_generator), value=True))
+
+# Definiera punkterna för triangeln med värden inom rätt intervall och som heltal
+points = [
+    si.Point(
+        x=200.0,
+        y=50.0,
+        speed=int(0),  # Speed som uint16 (0 - 65535)
+        direction=int(0),  # Direction som uint16
+        width=int(2),  # Width som uint8 (0 - 255)
+        pressure=int(100)  # Pressure som uint8
+    ),
+    si.Point(x=50.0,
+             y=350.0,
+             speed=int(0),
+             direction=int(0),
+             width=int(2),
+             pressure=int(100)),
+    si.Point(x=350.0,
+             y=350.0,
+             speed=int(0),
+             direction=int(0),
+             width=int(2),
+             pressure=int(100)),
+    si.Point(x=200.0,
+             y=50.0,
+             speed=int(0),
+             direction=int(0),
+             width=int(2),
+             pressure=int(100)),  # Återvänd till startpunkten
+]
+
+# Skapa en linje (stroke)
+line_id = next(id_generator)
+line_item = si.Line(
+    color=si.PenColor.BLACK,
+    tool=si.Pen.BALLPOINT_1,  # Använd BALLPOINT_1
+    points=points,
+    thickness_scale=1.0,
+    starting_length=0.0,
+)
+
+# Skapa en CrdtSequenceItem för linjen
+line_seq_item = CrdtSequenceItem(
+    item_id=line_id,
+    left_id=CrdtId(0, 0),  # Ingen vänster granne
+    right_id=CrdtId(0, 0),  # Ingen höger granne
+    deleted_length=0,
+    value=line_item)
+
+# Skapa en SceneLineItemBlock för linjen
+line_block = SceneLineItemBlock(parent_id=layer_id, item=line_seq_item)
+
+# Bygg upp blocken som ska skrivas
+blocks = []
+
+# Lägg till root node som TreeNodeBlock
+blocks.append(TreeNodeBlock(root_group))
+
+# Lägg till lagret som TreeNodeBlock
+blocks.append(TreeNodeBlock(layer))
+
+# Skapa en SceneGroupItemBlock för att länka lagret till root
+group_item_id = next(id_generator)
+group_item = CrdtSequenceItem(
+    item_id=group_item_id,
+    left_id=CrdtId(0, 0),  # Ingen vänster granne
+    right_id=CrdtId(0, 0),  # Ingen höger granne
+    deleted_length=0,
+    value=layer_id)
+group_block = SceneGroupItemBlock(parent_id=root_id, item=group_item)
+blocks.append(group_block)
+
+# Skapa en SceneGroupItemBlock för att länka linjen till lagret
+line_group_item_id = next(id_generator)
+line_group_item = CrdtSequenceItem(
+    item_id=line_group_item_id,
+    left_id=CrdtId(0, 0),  # Ingen vänster granne
+    right_id=CrdtId(0, 0),  # Ingen höger granne
+    deleted_length=0,
+    value=line_id)
+line_group_block = SceneGroupItemBlock(parent_id=layer_id,
+                                       item=line_group_item)
+blocks.append(line_group_block)
+
+# Lägg till line_block
+blocks.append(line_block)
+
+# Skriv blocken till en fil
+with open('triangel.rm', 'wb') as f:
+    write_blocks(f, blocks)
