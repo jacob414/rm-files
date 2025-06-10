@@ -47,7 +47,7 @@ make clean  # Removes .venv directory
 
 - **scene.py**: Manim-based scene creator for generating mathematical animations and shapes
 
-- **rmfiiles/**: Python package directory (currently empty but structured for future utilities)
+- **rmfiles/**: Python package directory with utility modules for ReMarkable file handling
 
 ### File Format Understanding
 
