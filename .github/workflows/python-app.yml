@@ -18,22 +18,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python 3.12
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: "3.12"
-    - name: Install dependencies
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libcairo2-dev \
+          libpango1.0-dev \
+          ffmpeg \
+          libgirepository1.0-dev \
+          pkg-config
+    
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest rmscene ipython ipdb
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
+        pip install -r requirements.txt
+    
+    - name: Lint with Black
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        black --check --diff .
+    
     - name: Test with pytest
       run: |
-        pytest
+        pytest tests/ -v
