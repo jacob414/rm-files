@@ -60,12 +60,26 @@ The project works with ReMarkable's proprietary .rm format which uses:
 ## Testing
 
 ```bash
-# Run tests (currently minimal - just a placeholder)
+# Run tests
 source .venv/bin/activate
 python -m pytest tests/
 ```
 
-Note: The test suite is currently minimal with just a placeholder test in `tests/test_tbd.py`.
+## Code Formatting
+
+This project uses Black for consistent Python code formatting.
+
+```bash
+# Check if code needs formatting
+source .venv/bin/activate
+black --check .
+
+# Format all Python files
+source .venv/bin/activate
+black .
+```
+
+Configuration is in `pyproject.toml`. Always run Black before committing code changes.
 
 ## Common Development Patterns
 

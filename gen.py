@@ -19,14 +19,11 @@ def main():
     # Create a triangle in the center of the page
     # ReMarkable coordinates: typical visible area is roughly 0-400 range
     triangle = notebook.create_triangle(
-        layer,
-        center_x=200.0,
-        center_y=200.0,
-        size=300.0  # Make it a decent size
+        layer, center_x=200.0, center_y=200.0, size=300.0  # Make it a decent size
     )
 
     # Write notebook to file
-    output_filename = 'triangel.rm'
+    output_filename = "triangel.rm"
     notebook.write(output_filename)
 
     print(f"Generated ReMarkable file: {output_filename}")
@@ -34,5 +31,5 @@ def main():
     print(f"Layer '{layer.label}' contains {len(layer.lines)} line(s)")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
