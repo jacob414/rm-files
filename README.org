@@ -4,7 +4,7 @@
 [[https://jacob414.github.io/rm-files/][https://img.shields.io/badge/docs-GitHub%20Pages-blue]]
 
 An experiment with the line files for the remarkable tablet. The
-stretch goal is to be able to convert a .SVG file to a .rm
+stretch goal is to be able to convert a =.SVG= file to a =.rm=
 file. Preferably also with the ability to insert it into the tablets
 file system.
 
@@ -16,24 +16,27 @@ now maintained with Codex CLI.
 
 ** QA And Dev Dependencies
 
-- Runtime deps: installed from `requirements.txt` (kept lean; excludes `manim`).
-- QA deps (CI/locals): installed from `requirements-qa.txt` and invoked via `make qa`.
-- Optional dev extras: `requirements-dev.txt` includes `manim` and other extras for
-  local-only workflows. CI does not install these to avoid system packages.
+- Runtime deps: installed from =requirements.txt= (kept lean; excludes
+  =manim=).
+- QA deps (CI/locals): installed from =requirements-qa.txt= and
+  invoked via =make qa=.
+- Optional dev extras: =requirements-dev.txt= includes =manim= and
+  other extras for local-only workflows. CI does not install these to
+  avoid system packages.
 
-Typical workflows:
+/Typical workflows:/
 
-- Quick tests: `make test-quick`
-- Full QA: `make qa` (lint, type-check, tests with coverage, security)
-- CI pipeline: runs `make ci` (no `manim`)
+- *Quick tests*: =make test-quick=
+- *Full QA*: =make qa= (lint, type-check, tests with coverage, security)
+- *CI pipeline*: runs =make ci= (no =manim=)
 
-Enabling `manim` locally (optional):
+** Enabling =manim= locally (optional):
 
 - Install dev extras: `source .venv/bin/activate && pip install -r requirements-dev.txt`
 - You may need system packages for Pango/Cairo bindings:
   - macOS (Homebrew): `brew install cairo pango`
   - Ubuntu/Debian: `sudo apt-get update && sudo apt-get install -y libpangocairo-1.0-0 libcairo2-dev libpango1.0-dev`
 
-Note: CI intentionally avoids installing `manim` (and `pangocairo`) to keep
-the pipeline fast and portable. Use local installs when you experiment with
-`scene.py` or any rendering tasks.
+Note: CI intentionally avoids installing `manim` (and `pangocairo`) to
+keep the pipeline fast and portable. Use local installs when you
+experiment with `scene.py` or any rendering tasks.
