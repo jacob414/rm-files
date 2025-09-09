@@ -5,15 +5,14 @@ This module provides functionality to create in-memory ReMarkable notebook objec
 that can be used to build .rm files programmatically.
 """
 
-from typing import List, Optional, Iterator
 from rmscene import LwwValue, write_blocks
 from rmscene import scene_items as si
 from rmscene.crdt_sequence import CrdtSequenceItem
 from rmscene.scene_stream import (
-    SceneTreeBlock,
-    TreeNodeBlock,
+    Block,
     SceneGroupItemBlock,
     SceneLineItemBlock,
+    TreeNodeBlock,
 )
 from rmscene.tagged_block_common import CrdtId
 
@@ -38,8 +37,8 @@ class NotebookLayer:
         self.layer_id = layer_id
         self.label = label
         self.visible = visible
-        self.lines: List[si.Line] = []
-        self.line_ids: List[CrdtId] = []
+        self.lines: list[si.Line] = []
+        self.line_ids: list[CrdtId] = []
 
     def add_line(self, line: si.Line, line_id: CrdtId) -> None:
         """Add a line to this layer."""
@@ -58,7 +57,7 @@ class ReMarkableNotebook:
     def __init__(self):
         self.id_generator = NotebookIdGenerator()
         self.root_id = CrdtId(0, 1)
-        self.layers: List[NotebookLayer] = []
+        self.layers: list[NotebookLayer] = []
 
     def create_layer(self, label: str = "Layer", visible: bool = True) -> NotebookLayer:
         """Create a new layer in the notebook."""
@@ -70,7 +69,7 @@ class ReMarkableNotebook:
     def add_line_to_layer(
         self,
         layer: NotebookLayer,
-        points: List[si.Point],
+        points: list[si.Point],
         color: si.PenColor = si.PenColor.BLACK,
         tool: si.Pen = si.Pen.BALLPOINT_1,
         thickness_scale: float = 1.0,
@@ -132,9 +131,9 @@ class ReMarkableNotebook:
         ]
         return self.add_line_to_layer(layer, points)
 
-    def to_blocks(self) -> List:
+    def to_blocks(self) -> list[Block]:
         """Convert the notebook to rmscene blocks for writing to .rm file."""
-        blocks = []
+        blocks: list[Block] = []
 
         # Create root group
         root_group = si.Group(node_id=self.root_id)
@@ -166,7 +165,7 @@ class ReMarkableNotebook:
             blocks.append(group_block)
 
             # Add lines to layer
-            for line, line_id in zip(layer.lines, layer.line_ids):
+            for line, line_id in zip(layer.lines, layer.line_ids, strict=True):
                 # Create line sequence item
                 line_seq_item = CrdtSequenceItem(
                     item_id=line_id,

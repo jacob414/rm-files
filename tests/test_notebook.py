@@ -2,16 +2,14 @@
 Tests for the rmfiles.notebook module.
 """
 
-import os
-import pytest
 from rmscene import scene_items as si
 from rmscene.tagged_block_common import CrdtId
 
 from rmfiles.notebook import (
-    create,
-    ReMarkableNotebook,
-    NotebookLayer,
     NotebookIdGenerator,
+    NotebookLayer,
+    ReMarkableNotebook,
+    create,
 )
 
 
@@ -168,9 +166,9 @@ class TestReMarkableNotebook:
 
         # Verify we have the expected block types
         from rmscene.scene_stream import (
-            TreeNodeBlock,
             SceneGroupItemBlock,
             SceneLineItemBlock,
+            TreeNodeBlock,
         )
 
         tree_blocks = [b for b in blocks if isinstance(b, TreeNodeBlock)]
@@ -199,7 +197,7 @@ class TestCreateFunction:
         assert notebook1 is not notebook2
 
         # Modify one and ensure the other is unaffected
-        layer1 = notebook1.create_layer("Layer 1")
+        notebook1.create_layer("Layer 1")
         assert len(notebook1.layers) == 1
         assert len(notebook2.layers) == 0
 
