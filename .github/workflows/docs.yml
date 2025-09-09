@@ -35,7 +35,6 @@ jobs:
           path: docs/_build/html
 
   deploy:
-    if: vars.PAGES_ENABLE == 'true'
     needs: build
     runs-on: ubuntu-latest
     permissions:
