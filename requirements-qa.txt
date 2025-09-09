@@ -5,3 +5,7 @@ bandit
 vulture
 interrogate
 pyupgrade
+sphinx
+sphinx-rtd-theme
+myst-parser
+linkify-it-py

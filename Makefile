@@ -11,6 +11,7 @@ BANDIT := $(VENV_DIR)/bin/bandit
 VULTURE := $(VENV_DIR)/bin/vulture
 BLACK := $(VENV_DIR)/bin/black
 PYUPGRADE := $(VENV_DIR)/bin/pyupgrade
+SPHINX_BUILD := $(VENV_DIR)/bin/sphinx-build
 
 $(VENV_DIR)/bin/activate: requirements.txt
 	python$(MY_PYTHON_VERSION) -m venv $(VENV_DIR)
@@ -67,4 +68,10 @@ qa: test audit ## Full QA pipeline
 
 ci: clean venv install-dev qa ## CI pipeline
 
-.PHONY: venv install-dev clean upgrade format lint lint-fix type-check security dead-code test test-quick audit qa ci
+docs-build: install-dev ## Build Sphinx HTML docs
+	$(SPHINX_BUILD) -b html docs docs/_build/html
+
+docs-linkcheck: install-dev ## Check docs links
+	$(SPHINX_BUILD) -b linkcheck docs docs/_build/linkcheck
+
+.PHONY: venv install-dev clean upgrade format lint lint-fix type-check security dead-code test test-quick audit qa ci docs-build docs-linkcheck
