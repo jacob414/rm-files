@@ -41,3 +41,17 @@ The CI run failed again with this message:
   RequiredDependencyException: pangocairo >= 1.30.0 is required
 
 Fix.
+
+** 2025-09-09 18:54
+
+Add a README note about the new QA split and how to enable manim
+locally. Add, commit & push when done.
+
+** 2025-09-09 18:55
+
+Later. Imitate the Sphinx documentation procedure from
+~/src/mine/stenkoll. Add, commit & push when done.
+
+** 2025-09-09 19:02
+
+Yes. Do both. Add, comitt and push when done.
