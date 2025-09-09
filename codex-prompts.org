@@ -1,0 +1,23 @@
+** 2025-09-09 15:26
+
+Codex, you will take over this project from Claude Code. Investigate
+it's contents and try to learn as much as possible about it. Describe
+your findings here and if possible add them to your project memory.
+
+** 2025-09-09 15:33
+
+Fix the minor issues.
+
+** 2025-09-09 15:34
+
+Fix the remaining issues to your liking.
+
+** 2025-09-09 15:37
+
+Good, add, commit and push.
+
+** 2025-09-09 15:49
+
+Good. After trying make qa I notice that the vulture tests isn't
+relevant at this stage in the project. Make them optional and don't
+run them unless I tell you too. When that's done, add, commit and push.
