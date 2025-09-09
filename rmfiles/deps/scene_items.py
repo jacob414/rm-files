@@ -1,14 +1,11 @@
 """Data structures for the contents of a scene."""
 
-from dataclasses import dataclass, field
 import enum
 import logging
-import typing as tp
+from dataclasses import dataclass, field
 
-from .tagged_block_common import CrdtId, LwwValue
 from .crdt_sequence import CrdtSequence
-from .text import expand_text_items
-
+from .tagged_block_common import CrdtId, LwwValue
 
 _logger = logging.getLogger(__name__)
 
@@ -46,10 +43,10 @@ class Group(SceneItem):
     label: LwwValue[str] = LwwValue(CrdtId(0, 0), "")
     visible: LwwValue[bool] = LwwValue(CrdtId(0, 0), True)
 
-    anchor_id: tp.Optional[LwwValue[CrdtId]] = None
-    anchor_type: tp.Optional[LwwValue[int]] = None
-    anchor_threshold: tp.Optional[LwwValue[float]] = None
-    anchor_origin_x: tp.Optional[LwwValue[float]] = None
+    anchor_id: LwwValue[CrdtId] | None = None
+    anchor_type: LwwValue[int] | None = None
+    anchor_threshold: LwwValue[float] | None = None
+    anchor_origin_x: LwwValue[float] | None = None
 
 
 ## Strokes
@@ -201,7 +198,7 @@ class GlyphRange(SceneItem):
     `rectangles` represent the locations of the highlight.
     """
 
-    start: tp.Optional[int]
+    start: int | None
     length: int
     text: str
     color: PenColor

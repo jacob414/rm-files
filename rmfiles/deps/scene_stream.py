@@ -6,22 +6,22 @@ With help from ddvk's v6 reader, and enum values from remt.
 
 from __future__ import annotations
 
+import logging
+import math
+import typing as tp
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator
-import math
+from dataclasses import KW_ONLY, dataclass, replace
 from uuid import UUID, uuid4
-from dataclasses import dataclass, replace, KW_ONLY
-import logging
-import typing as tp
 
 from packaging.version import Version
 
-from .tagged_block_common import CrdtId, LwwValue, UnexpectedBlockError
-from .tagged_block_reader import TaggedBlockReader, MainBlockInfo
-from .tagged_block_writer import TaggedBlockWriter
+from . import scene_items as si
 from .crdt_sequence import CrdtSequence, CrdtSequenceItem
 from .scene_tree import SceneTree
-from . import scene_items as si
+from .tagged_block_common import CrdtId, LwwValue
+from .tagged_block_reader import MainBlockInfo, TaggedBlockReader
+from .tagged_block_writer import TaggedBlockWriter
 
 _logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class Block(ABC):
         return self.BLOCK_TYPE
 
     @classmethod
-    def lookup(cls, block_type: int) -> tp.Optional[tp.Type[Block]]:
+    def lookup(cls, block_type: int) -> type[Block] | None:
         if getattr(cls, "BLOCK_TYPE", None) == block_type:
             return cls
         for subclass in cls.__subclasses__():
@@ -774,7 +774,7 @@ def read_blocks(data: tp.BinaryIO) -> Iterator[Block]:
 
 
 def write_blocks(
-    data: tp.BinaryIO, blocks: Iterable[Block], options: tp.Optional[dict] = None
+    data: tp.BinaryIO, blocks: Iterable[Block], options: dict | None = None
 ):
     """
     Write blocks to file.

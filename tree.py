@@ -5,18 +5,7 @@ import re
 
 
 def is_web_link(path_or_name):
-    # Enhanced regex pattern to match a broader range of DNS-like strings, including subdomains
-    pattern = r"^[a-zA-Z0-9][a-zA-Z0-9-]*\.[a-zA-Z]{2,}$"
-    # Debugging: Print the input to see what is being matched
-    print("Checking:", path_or_name)
-    return bool(re.match(pattern, path_or_name))
-
-
-import re
-
-
-def is_web_link(path_or_name):
-    # Updated regex pattern to exclude spaces and ensure it captures more complex URLs
+    # Match basic domains or full URLs while excluding spaces
     pattern = r"^(https?:\/\/)?[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?$"
     return bool(re.match(pattern, path_or_name))
 

@@ -23,7 +23,7 @@ def main():
     )
 
     # Write notebook to file
-    output_filename = "triangel.rm"
+    output_filename = "triangle.rm"
     notebook.write(output_filename)
 
     print(f"Generated ReMarkable file: {output_filename}")
