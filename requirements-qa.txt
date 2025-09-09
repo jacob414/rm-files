@@ -9,3 +9,4 @@ sphinx
 sphinx-rtd-theme
 myst-parser
 linkify-it-py
+pre-commit

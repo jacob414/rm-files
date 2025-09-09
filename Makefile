@@ -12,6 +12,7 @@ VULTURE := $(VENV_DIR)/bin/vulture
 BLACK := $(VENV_DIR)/bin/black
 PYUPGRADE := $(VENV_DIR)/bin/pyupgrade
 SPHINX_BUILD := $(VENV_DIR)/bin/sphinx-build
+PRECOMMIT := $(VENV_DIR)/bin/pre-commit
 
 $(VENV_DIR)/bin/activate: requirements.txt
 	python$(MY_PYTHON_VERSION) -m venv $(VENV_DIR)
@@ -60,6 +61,7 @@ audit: ## Run all QA checks (optional dead-code excluded)
 	$(MAKE) upgrade
 	$(MAKE) format
 	$(MAKE) lint
+	$(MAKE) pre-commit
 	$(MAKE) type-check
 	$(MAKE) security
 	@echo "(dead-code analysis available via 'make dead-code')"
@@ -74,4 +76,7 @@ docs-build: install-dev ## Build Sphinx HTML docs
 docs-linkcheck: install-dev ## Check docs links
 	$(SPHINX_BUILD) -b linkcheck docs docs/_build/linkcheck
 
-.PHONY: venv install-dev clean upgrade format lint lint-fix type-check security dead-code test test-quick audit qa ci docs-build docs-linkcheck
+pre-commit: install-dev ## Run pre-commit hooks against all files
+	$(PRECOMMIT) run --all-files --show-diff-on-failure
+
+.PHONY: venv install-dev clean upgrade format lint lint-fix type-check security dead-code test test-quick audit qa ci docs-build docs-linkcheck pre-commit
