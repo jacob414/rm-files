@@ -241,7 +241,7 @@ I apologize for the confusion. It seems that the rmscene library has changed its
 Here's the updated code:
 
 python
-#+BEGIN_SRC 
+#+BEGIN_SRC
 from rmscene.scene import Scene
 from rmscene.stroke import Stroke
 from rmscene.pen import Pen

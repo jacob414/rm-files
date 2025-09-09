@@ -205,7 +205,7 @@ def write_header(self) -> None:
     self.data.write_header()
 #+END_SRC
 
-    
+
 This method calls write_header on a =DataStream= object, which is an instance variable named data within the =TaggedBlockWriter= class. The actual header writing logic seems to be encapsulated within the =DataStream= class's =write_header= method.
 
 To fully understand how the header is constructed, we need to examine the implementation of write_header in the =DataStream= class. Unfortunately, the snippet doesn't include this part. We'll need to locate and review the =DataStream= class's implementation, likely found in the same file or another file within the =rmscene= module, to uncover the specifics of the header format.
@@ -862,10 +862,10 @@ def main():
 
     with open(filename, 'wb') as f:
         writer = TaggedBlockWriter(f)
-        
+
         # Write the header
         f.write(HEADER_V6)
-        
+
         # Create and write a simple scene with one line
         blocks = [
             MigrationInfoBlock(migration_id=CrdtId(1, 1), is_device=True),

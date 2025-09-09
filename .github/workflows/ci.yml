@@ -32,4 +32,3 @@ jobs:
           MY_PYTHON_VERSION: ''
         run: |
           make ci MY_PYTHON_VERSION=
-

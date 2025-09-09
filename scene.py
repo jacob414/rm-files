@@ -1,5 +1,21 @@
-import numpy as np
-from manim import *
+from manim import (
+    BLUE,
+    GREEN,
+    PI,
+    RED,
+    RIGHT,
+    UP,
+    WHITE,
+    Circle,
+    FadeOut,
+    Rotate,
+    Scene,
+    Square,
+    Text,
+    Triangle,
+    VGroup,
+    Write,
+)
 
 
 class Scene(Scene):

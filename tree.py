@@ -1,7 +1,8 @@
-import paramiko
 import json
 import os
 import re
+
+import paramiko
 
 
 def is_web_link(path_or_name):

@@ -61,3 +61,8 @@ Yes. Do both. Add, comitt and push when done.
 Can problems like the one we had with the CI pipeline just now be
 avoided by installing a pre-commit hook? If so install one, then
 commit and push when done.
+
+** 2025-09-09 22:16
+
+I see several failures when I run 'make qa'. Iterate and fix until all
+of 'make qa' can run without errors or warnings.

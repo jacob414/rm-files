@@ -34,7 +34,7 @@ upgrade: install-dev ## Modernize syntax (pyupgrade)
 	find rmfiles tests -name "*.py" -exec $(PYUPGRADE) --py312-plus {} + || true
 
 format: install-dev ## Format code (Black)
-	$(BLACK) rmfiles tests gen.py
+	$(BLACK) .
 
 lint: install-dev ## Lint (Ruff)
 	$(RUFF) check rmfiles tests
@@ -76,7 +76,9 @@ docs-build: install-dev ## Build Sphinx HTML docs
 docs-linkcheck: install-dev ## Check docs links
 	$(SPHINX_BUILD) -b linkcheck docs docs/_build/linkcheck
 
-pre-commit: install-dev ## Run pre-commit hooks against all files
+pre-commit: install-dev ## Run pre-commit hooks against all files (auto-fix, then verify)
+	# First run may apply fixes and exit non-zero; run again to verify clean
+	$(PRECOMMIT) run --all-files --show-diff-on-failure || true
 	$(PRECOMMIT) run --all-files --show-diff-on-failure
 
 .PHONY: venv install-dev clean upgrade format lint lint-fix type-check security dead-code test test-quick audit qa ci docs-build docs-linkcheck pre-commit

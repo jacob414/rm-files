@@ -11,7 +11,7 @@ Welcome to rm-files' documentation.
 Overview
 --------
 
-rm-files provides a small API for constructing ReMarkable 
+rm-files provides a small API for constructing ReMarkable
 ``.rm`` (lines v6) files using the upstream ``rmscene`` library.
 
 Quickstart
@@ -24,4 +24,3 @@ Quickstart
    python gen.py
 
 This generates ``triangle.rm`` using the high-level notebook API.
-
