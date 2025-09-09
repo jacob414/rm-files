@@ -5,10 +5,8 @@ stretch goal is to be able to convert a .SVG file to a .rm
 file. Preferably also with the ability to insert it into the tablets
 file system.
 
-** +Claude 3 Opus experiment+ GPT-4 experiment
+** AI-assisted experiments
 
-+This is going to be a dual purpose project, I'm going to see how far I
-can get with AI code generation and assisted development, and add the
-corresponding docs (hopefully). If you see some unsavoury code,
-remember, it's probably +Claude+ GPT-4, not me! ;-)
-
+This project explores AI-assisted development for working with the
+ReMarkable format. Earlier iterations used Claude 3 and GPT-4; it is
+now maintained with Codex CLI.

@@ -1,6 +1,5 @@
 git+https://github.com/ricklupton/rmscene.git
 numpy
-manim
 paramiko
 ipython
 ipdb

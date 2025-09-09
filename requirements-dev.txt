@@ -5,3 +5,4 @@ bandit
 vulture
 interrogate
 pyupgrade
+manim
