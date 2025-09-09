@@ -18,6 +18,26 @@ Good, add, commit and push.
 
 ** 2025-09-09 15:49
 
-Good. After trying make qa I notice that the vulture tests isn't
-relevant at this stage in the project. Make them optional and don't
-run them unless I tell you too. When that's done, add, commit and push.
+Good. Add, commit and push. After trying make qa I notice that the
+vulture tests isn't relevant at this stage in the project. Make them
+optional and don't run them unless I tell you too. When that's done,
+add, commit and push.
+
+** 2025-09-09 15:55
+
+Add a GitHub Actions workflow mirroring make ci.
+
+** 2025-09-09 16:40
+
+There was a failure in the CI run, I've downloaded logs and put them
+in './logs_45111281811/'. Investigate and fix. If it's not a config
+issue, create a test and iterate TDD-style on it untill it's
+fixed. When done, add commit and push.
+
+** 2025-09-09 17:46
+
+The CI run failed again with this message:
+
+  RequiredDependencyException: pangocairo >= 1.30.0 is required
+
+Fix.
