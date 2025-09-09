@@ -16,4 +16,4 @@ repos:
       - id: trailing-whitespace
       - id: check-merge-conflict
       - id: check-yaml
-        files: ".*\.ya?ml$"
+        files: '.*\.ya?ml$'
