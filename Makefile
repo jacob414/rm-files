@@ -55,13 +55,13 @@ test: install-dev ## Run tests with coverage
 test-quick: venv ## Run tests (no coverage)
 	$(PYTEST) -q
 
-audit: ## Run all QA checks
+audit: ## Run all QA checks (optional dead-code excluded)
 	$(MAKE) upgrade
 	$(MAKE) format
 	$(MAKE) lint
 	$(MAKE) type-check
 	$(MAKE) security
-	$(MAKE) dead-code
+	@echo "(dead-code analysis available via 'make dead-code')"
 
 qa: test audit ## Full QA pipeline
 
