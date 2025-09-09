@@ -1,0 +1,7 @@
+ruff
+mypy
+pytest-cov
+bandit
+vulture
+interrogate
+pyupgrade

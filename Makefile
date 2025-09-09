@@ -18,8 +18,8 @@ $(VENV_DIR)/bin/activate: requirements.txt
 
 venv: $(VENV_DIR)/bin/activate ## Create venv and install runtime deps
 
-install-dev: venv ## Install development dependencies
-	$(PIP) install -r requirements-dev.txt
+install-dev: venv ## Install QA dependencies (portable in CI)
+	$(PIP) install -r requirements-qa.txt
 
 clean: ## Remove venv and caches
 	rm -rf $(VENV_DIR)
