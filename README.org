@@ -1,7 +1,6 @@
 * rm-files
 
-[[https://github.com/jacob414/rm-files/actions/workflows/ci.yml][https://img.shields.io/github/actions/workflow/status/jacob414/rm-files/ci.yml?branch=main&label=CI]]
-[[https://jacob414.github.io/rm-files/][https://img.shields.io/badge/docs-GitHub%20Pages-blue]]
+[[https://img.shields.io/github/actions/workflow/status/jacob414/rm-files/ci.yml?branch=main&label=CI][CI State]]
 
 An experiment with the line files for the remarkable tablet. The
 stretch goal is to be able to convert a =.SVG= file to a =.rm=
