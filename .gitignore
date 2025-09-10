@@ -169,3 +169,5 @@ output/
 
 # Claude Code
 .claude/
+
+.codex-min.org
