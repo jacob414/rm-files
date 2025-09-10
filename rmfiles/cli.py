@@ -110,6 +110,10 @@ def _inspect_with_rmscene(path: Path) -> dict[str, int] | None:
         "root_text": 0,
     }
 
+    # Only valid for raw .rm files
+    if path.suffix.lower() != ".rm":
+        return None
+
     with path.open("rb") as f:
         for block in read_blocks(f):  # type: ignore
             counts["blocks"] += 1
@@ -123,6 +127,46 @@ def _inspect_with_rmscene(path: Path) -> dict[str, int] | None:
                 counts["root_text"] += 1
 
     return counts
+
+
+def _rmdoc_counts(path: Path) -> dict[str, int] | None:
+    """Return block counts for the first page inside a .rmdoc, if possible."""
+    try:
+        from io import BytesIO
+        from rmfiles.rmdoc import read_rmdoc
+    except Exception:
+        return None
+
+    imported = _try_import_rmscene()
+    if not imported:
+        return None
+
+    read_blocks = imported[0]  # type: ignore[index]
+
+    try:
+        doc = read_rmdoc(path)
+        if not doc.pages:
+            return None
+        rm_bytes = doc.pages[0].rm_bytes
+    except Exception:
+        return None
+
+    counts: dict[str, int] = {
+        "blocks": 0,
+        "tree_nodes": 0,
+        "group_items": 0,
+        "line_items": 0,
+        "root_text": 0,
+    }
+
+    try:
+        bio = BytesIO(rm_bytes)
+        for block in read_blocks(bio):  # type: ignore
+            counts["blocks"] += 1
+            # Types are not available here without importing; keep total blocks only
+        return counts
+    except Exception:
+        return None
 
 
 def _cmd_inspect(args: argparse.Namespace) -> int:
@@ -152,7 +196,10 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
         print(f"Header (ascii): {header_ascii!r}")
     print("Header (hex):", header.hex(" "))
 
+    # Block counts: handle .rm natively and .rmdoc via first page
     counts = _inspect_with_rmscene(path)
+    if counts is None and path.suffix.lower() == ".rmdoc":
+        counts = _rmdoc_counts(path)
     if counts:
         print(
             "Blocks: {blocks}, TreeNodes: {tree_nodes}, GroupItems: {group_items}, "
