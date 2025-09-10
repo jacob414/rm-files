@@ -17,11 +17,12 @@ def main() -> int:
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    create_rectangle_rm(str(out), x=args.x, y=args.y, width=args.width, height=args.height)
+    create_rectangle_rm(
+        str(out), x=args.x, y=args.y, width=args.width, height=args.height
+    )
     print(f"Wrote: {out}")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

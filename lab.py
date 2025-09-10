@@ -16,13 +16,11 @@ Usage examples:
 from __future__ import annotations
 
 import argparse
-from io import BytesIO
 from pathlib import Path
 
 try:
     from uuid import uuid4
 
-    from rmfiles.rmdoc import RmDoc, write_rmdoc
     from rmscene import LwwValue, write_blocks
     from rmscene import scene_items as si
     from rmscene.crdt_sequence import CrdtSequenceItem
@@ -36,6 +34,8 @@ try:
         TreeNodeBlock,
     )
     from rmscene.tagged_block_common import CrdtId
+
+    from rmfiles.rmdoc import RmDoc, write_rmdoc
 except ModuleNotFoundError as e:
     missing = str(e).split("'")[-2] if "'" in str(e) else str(e)
     print(
