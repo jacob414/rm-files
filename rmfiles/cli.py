@@ -165,6 +165,47 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
 
+    # Layers: support both .rm and .rmdoc
+    try:
+        if path.suffix.lower() == ".rmdoc":
+            from rmfiles.rmdoc import read_rmdoc  # lazy import
+
+            doc = read_rmdoc(path)
+            print(f"Pages: {len(doc.pages)}")
+            for i, page in enumerate(doc.pages, start=1):
+                names = [layer.label or "" for layer in page.layers]
+                print(f"- Page {i}: layers={len(page.layers)}: {', '.join(names)}")
+        elif path.suffix.lower() == ".rm":
+            # Parse layers via rmscene if available
+            try:
+                from rmscene.scene_stream import read_tree  # type: ignore  # noqa: E402,I001
+                from rmscene import scene_items as si  # type: ignore  # noqa: E402,I001
+            except Exception:
+                if args.verbose:
+                    print(
+                        "Tip: install 'rmscene' to see layer names.",
+                        file=sys.stderr,
+                    )
+            else:
+                from io import BytesIO
+
+                try:
+                    tree = read_tree(BytesIO(path.read_bytes()))  # type: ignore[arg-type]
+                    root = getattr(tree, "root", None)
+                    layer_names: list[str] = []
+                    if root is not None:
+                        for item in root.children.values():
+                            if isinstance(item, si.Group):  # type: ignore[attr-defined]
+                                label = getattr(item, "label", None)
+                                layer_names.append(getattr(label, "value", ""))
+                    print(f"Layers: {len(layer_names)}: {', '.join(layer_names)}")
+                except Exception:
+                    # Non-fatal; keep base info
+                    pass
+    except Exception:
+        # Non-fatal; keep base info
+        pass
+
     return 0
 
 
@@ -204,7 +245,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_new.set_defaults(func=_cmd_new)
 
     # inspect
-    p_inspect = sub.add_parser("inspect", help="Print basic info about a .rm file")
+    p_inspect = sub.add_parser(
+        "inspect", help="Print basic info about a .rm or .rmdoc file"
+    )
     p_inspect.add_argument("path", help="Path to .rm file")
     p_inspect.add_argument("-v", "--verbose", action="store_true")
     p_inspect.set_defaults(func=_cmd_inspect)
