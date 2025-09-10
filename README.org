@@ -61,5 +61,27 @@ Examples:
 - Inspect a file (basic header + optional block counts if `rmscene` is installed):
   - `rmfiles inspect output.rm`
 
+** Programmatic Usage
+
+Generate a simple .rm file with a visible rectangle using the rmscene-backed
+helpers in `rmfiles.generate`:
+
+Example (Python):
+
+  # Create and write a rectangle .rm
+  from rmfiles.generate import create_rectangle_rm
+  create_rectangle_rm("output/rect.rm", x=100, y=120, width=300, height=200)
+
+  # Or build the blocks then write
+  from rmfiles.generate import build_rectangle_blocks, write_rm
+  blocks, author_uuid = build_rectangle_blocks(x=120, y=140, width=160, height=100)
+  write_rm("output/rect2.rm", blocks, version="3.1")
+
+These helpers assemble a minimal, device-like block sequence (author IDs,
+migration and page info, scene tree, layer + stroke) using `rmscene` and write
+with a compatible version string. Coordinates are in pixels (typical page
+dimensions 1404×1872). For visibility, strokes use a marker tool and thicker
+width than the default.
+
 Note: writing relies on the `rmscene` package (installed via `setup.py`). If it's
 not available, `rmfiles new` will fail with a clear message.

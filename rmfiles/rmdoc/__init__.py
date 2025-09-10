@@ -21,11 +21,14 @@ round-trips and local inspection for now.
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 import zipfile
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 
 @dataclass
@@ -57,6 +60,7 @@ class RmDoc:
 
     doc_id: str
     visible_name: str = ""
+    author_uuid: UUID | None = None
     content: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
     pages: list[Page] = field(default_factory=list)
@@ -156,22 +160,75 @@ def write_rmdoc(doc: RmDoc, path: str | Path) -> None:
     content = dict(doc.content) if doc.content else {}
     cpages = content.setdefault("cPages", {})
     pages_list = []
+    total_rm_bytes = 0
     for _i, p in enumerate(doc.pages, start=1):
         entry: dict[str, Any] = {"id": p.page_id}
-        if p.template:
-            entry["template"] = {"timestamp": "1:1", "value": p.template}
+        # Template: default to "Blank" if not provided, match drawj2d shape
+        template_value = p.template if p.template else "Blank"
+        entry["template"] = {"timestamp": "1:2", "value": template_value}
         # Fake an index structure similar to sample
         entry.setdefault("idx", {"timestamp": "1:2", "value": "ba"})
         pages_list.append(entry)
+        total_rm_bytes += len(p.rm_bytes)
     cpages["pages"] = pages_list
+    # Set lastOpened to the first page if missing
+    if pages_list:
+        cpages.setdefault(
+            "lastOpened", {"timestamp": "1:1", "value": pages_list[0]["id"]}
+        )
+    # Original (-1) like in sample
+    cpages.setdefault("original", {"timestamp": "0:0", "value": -1})
+    # Map author UUID to id 1 like in sample
+    if doc.author_uuid:
+        cpages.setdefault(
+            "uuids",
+            [
+                {
+                    "first": str(doc.author_uuid),
+                    "second": 1,
+                }
+            ],
+        )
+    # Provide defaults for fields commonly present
+    content.setdefault("coverPageNumber", -1)
     content["fileType"] = content.get("fileType", "notebook")
     content["formatVersion"] = content.get("formatVersion", 2)
     content["pageCount"] = len(doc.pages)
+    # Total size in bytes for all page .rm files (string), as seen in samples
+    content["sizeInBytes"] = str(total_rm_bytes)
+    # Common default layout fields mirrored from sample; safe fallbacks
+    content.setdefault("orientation", "portrait")
+    content.setdefault("textScale", 1)
+    content.setdefault("lineHeight", -1)
+    content.setdefault("margins", 125)
+    content.setdefault("textAlignment", "justify")
+    content.setdefault("zoomMode", "bestFit")
+    content.setdefault("pageTags", [])
+    content.setdefault("tags", [])
+    # Custom zoom defaults
+    content.setdefault("customZoomCenterX", 0)
+    content.setdefault("customZoomCenterY", 936)
+    content.setdefault("customZoomOrientation", "portrait")
+    content.setdefault("customZoomPageHeight", 1872)
+    content.setdefault("customZoomPageWidth", 1404)
+    content.setdefault("customZoomScale", 1)
 
     metadata = dict(doc.metadata) if doc.metadata else {}
     if doc.visible_name:
         metadata["visibleName"] = doc.visible_name
     metadata.setdefault("type", "DocumentType")
+    # Timestamps in milliseconds since epoch
+    import time
+
+    now_ms = int(time.time() * 1000)
+    metadata.setdefault("createdTime", str(now_ms))
+    metadata.setdefault("lastModified", str(now_ms))
+    metadata.setdefault("lastOpenedPage", 0)
+    metadata.setdefault("lastOpened", str(now_ms))
+    metadata.setdefault("new", False)
+    metadata.setdefault("parent", "")
+    metadata.setdefault("pinned", False)
+    metadata.setdefault("source", "")
 
     with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_STORED) as z:
         z.writestr(f"{doc_id}.content", json.dumps(content, indent=4))
@@ -203,7 +260,9 @@ def from_notebook(notebook: Any, visible_name: str = "") -> RmDoc:
     doc_id = str(uuid.uuid4())
     page_id = str(uuid.uuid4())
 
-    doc = RmDoc(doc_id=doc_id, visible_name=visible_name)
+    # If notebook provides an author uuid, preserve it for .rmdoc content
+    author_uuid = getattr(notebook, "author_uuid", None)
+    doc = RmDoc(doc_id=doc_id, visible_name=visible_name, author_uuid=author_uuid)
     doc.add_page(page_id=page_id, rm_bytes=rm_bytes)
     return doc
 
@@ -222,8 +281,24 @@ def _extract_layers_from_rm_bytes(rm_bytes: bytes) -> list[LayerInfo]:
         # rmscene not available; can't parse layers
         return []
 
+    @contextmanager
+    def _silence_rmscene_warnings():
+        loggers = [
+            logging.getLogger("rmscene"),
+            logging.getLogger("rmscene.tagged_block_reader"),
+        ]
+        levels = [lg.level for lg in loggers]
+        for lg in loggers:
+            lg.setLevel(logging.ERROR)
+        try:
+            yield
+        finally:
+            for lg, level in zip(loggers, levels, strict=False):
+                lg.setLevel(level)
+
     try:
-        tree = read_tree(BytesIO(rm_bytes))
+        with _silence_rmscene_warnings():
+            tree = read_tree(BytesIO(rm_bytes))
     except Exception:
         return []
 

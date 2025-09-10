@@ -5,13 +5,21 @@ This module provides functionality to create in-memory ReMarkable notebook objec
 that can be used to build .rm files programmatically.
 """
 
+# isort: skip_file
+
+from uuid import UUID, uuid4
+
 from rmscene import LwwValue, write_blocks
 from rmscene import scene_items as si
 from rmscene.crdt_sequence import CrdtSequenceItem
 from rmscene.scene_stream import (
     Block,
+    AuthorIdsBlock,
+    MigrationInfoBlock,
+    PageInfoBlock,
     SceneGroupItemBlock,
     SceneLineItemBlock,
+    SceneTreeBlock,
     TreeNodeBlock,
 )
 from rmscene.tagged_block_common import CrdtId
@@ -58,6 +66,9 @@ class ReMarkableNotebook:
         self.id_generator = NotebookIdGenerator()
         self.root_id = CrdtId(0, 1)
         self.layers: list[NotebookLayer] = []
+        # Keep a stable author UUID for this notebook instance so it
+        # can be mirrored in .rmdoc metadata.
+        self.author_uuid: UUID = uuid4()
 
     def create_layer(self, label: str = "Layer", visible: bool = True) -> NotebookLayer:
         """Create a new layer in the notebook."""
@@ -135,12 +146,30 @@ class ReMarkableNotebook:
         """Convert the notebook to rmscene blocks for writing to .rm file."""
         blocks: list[Block] = []
 
-        # Create root group
+        # Create root group (scene tree root)
         root_group = si.Group(node_id=self.root_id)
         blocks.append(TreeNodeBlock(root_group))
 
+        # Header/meta blocks that real files typically include
+        blocks.append(AuthorIdsBlock(author_uuids={1: self.author_uuid}))
+        blocks.append(MigrationInfoBlock(migration_id=CrdtId(1, 1), is_device=True))
+        blocks.append(
+            PageInfoBlock(
+                loads_count=1, merges_count=0, text_chars_count=0, text_lines_count=0
+            )
+        )
+
         # Process each layer
         for layer in self.layers:
+            # Add tree mapping for this layer (parent: root)
+            blocks.append(
+                SceneTreeBlock(
+                    tree_id=layer.layer_id,
+                    node_id=layer.layer_id,
+                    is_update=True,
+                    parent_id=self.root_id,
+                )
+            )
             # Create layer group with label and visibility
             layer_label_id = self.id_generator.next_id()
             layer_label = LwwValue(timestamp=layer_label_id, value=layer.label)
