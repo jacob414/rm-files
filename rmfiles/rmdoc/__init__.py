@@ -82,7 +82,9 @@ def read_rmdoc(path: str | Path) -> RmDoc:
             metadata = json.loads(z.read(metadata_name).decode("utf-8"))
 
         # Visible name from metadata if present
-        visible_name = metadata.get("visibleName", "") if isinstance(metadata, dict) else ""
+        visible_name = (
+            metadata.get("visibleName", "") if isinstance(metadata, dict) else ""
+        )
 
         # Discover pages: files under `<doc_id>/` ending with `.rm`
         pages: list[Page] = []

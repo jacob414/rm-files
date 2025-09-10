@@ -55,7 +55,9 @@ def test_write_single_page_rmdoc(tmp_path: Path):
         assert f"{rmd.doc_id}.content" in names
         assert f"{rmd.doc_id}.metadata" in names
         # One page .rm under dir
-        rm_names = [n for n in names if n.startswith(f"{rmd.doc_id}/") and n.endswith(".rm")]
+        rm_names = [
+            n for n in names if n.startswith(f"{rmd.doc_id}/") and n.endswith(".rm")
+        ]
         assert len(rm_names) == 1
 
         # Read header
@@ -67,4 +69,3 @@ def test_write_single_page_rmdoc(tmp_path: Path):
     assert doc2.visible_name == "Triangle"
     assert len(doc2.pages) == 1
     assert doc2.content.get("pageCount") == 1
-

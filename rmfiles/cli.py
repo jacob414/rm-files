@@ -197,9 +197,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_new.set_defaults(func=_cmd_new)
 
     # inspect
-    p_inspect = sub.add_parser(
-        "inspect", help="Print basic info about a .rm file"
-    )
+    p_inspect = sub.add_parser("inspect", help="Print basic info about a .rm file")
     p_inspect.add_argument("path", help="Path to .rm file")
     p_inspect.add_argument("-v", "--verbose", action="store_true")
     p_inspect.set_defaults(func=_cmd_inspect)
@@ -215,4 +213,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
-
