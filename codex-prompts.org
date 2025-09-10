@@ -98,4 +98,5 @@ Pin rmscene in CI as well. Commit & push when done.
 ** 2025-09-10 15:37
 
 Yes, update docs.yml to install requirements.txt alongside QA deps to
-  future‑proof. Commit & push when done.
+future‑proof. Commit & push when done.
+
