@@ -84,4 +84,18 @@ docs/decisions directory.  When done documenting, commit & push.
 
 Good, commit & push. Start developing a subpackage in rmfiles,
 =rmfiles.rmdoc=, that should be able too read and write the =.rmdoc=
+archive format. Read ./docs/decisions/0003-rmdoc-archive-format.rst if
+you haven't already. Use a TDD methodology.
 
+** 2025-09-10 15:21
+
+Pin rmscene to the version we are using right now.
+
+** 2025-09-10 15:30
+
+Pin rmscene in CI as well. Commit & push when done.
+
+** 2025-09-10 15:37
+
+Yes, update docs.yml to install requirements.txt alongside QA deps to
+  future‑proof. Commit & push when done.
