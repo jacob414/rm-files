@@ -58,7 +58,8 @@ Guidance For Development
 
 Follow-ups
 ----------
-- Consider pinning ``rmscene`` to a stable tag/commit to avoid surprise breaks.
+- We have pinned ``rmscene==0.7.0`` in ``setup.py`` and ``requirements.txt`` to
+  ensure reproducible CI/local installs. Revisit the pin periodically to
+  incorporate upstream fixes (consider pinning to a tag/commit if needed).
 - Extend CLI with richer inspect commands powered by ``rmscene``.
 - Document offline workflows (prebuilt wheels, internal mirrors) if needed.
-
