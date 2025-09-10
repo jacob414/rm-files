@@ -77,9 +77,9 @@ def read_rmdoc(path: str | Path) -> RmDoc:
         content: dict[str, Any] = {}
         metadata: dict[str, Any] = {}
         if content_name in names:
-            content = json.loads(z.read(content_name))
+            content = json.loads(z.read(content_name).decode("utf-8"))
         if metadata_name in names:
-            metadata = json.loads(z.read(metadata_name))
+            metadata = json.loads(z.read(metadata_name).decode("utf-8"))
 
         # Visible name from metadata if present
         visible_name = metadata.get("visibleName", "") if isinstance(metadata, dict) else ""
@@ -187,4 +187,3 @@ def from_notebook(notebook: Any, visible_name: str = "") -> RmDoc:
     doc = RmDoc(doc_id=doc_id, visible_name=visible_name)
     doc.add_page(page_id=page_id, rm_bytes=rm_bytes)
     return doc
-
