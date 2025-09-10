@@ -10,9 +10,8 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
-from datetime import datetime, timezone
 
 
 def _try_import_rmscene():
@@ -134,8 +133,8 @@ def _inspect_with_rmscene(path: Path) -> dict[str, int] | None:
 def _rmdoc_counts(path: Path) -> dict[str, int] | None:
     """Return block counts for the first page inside a .rmdoc, if possible."""
     try:
-        from io import BytesIO
-        from rmfiles.rmdoc import read_rmdoc
+        from io import BytesIO  # noqa: I001
+        from rmfiles.rmdoc import read_rmdoc  # noqa: I001
     except Exception:
         return None
 
@@ -168,24 +167,47 @@ def _rmdoc_counts(path: Path) -> dict[str, int] | None:
         "root_text": 0,
     }
 
+    def _silence_rmscene_warnings():
+        import logging
+
+        loggers = [
+            logging.getLogger("rmscene"),
+            logging.getLogger("rmscene.tagged_block_reader"),
+        ]
+        levels = [lg.level for lg in loggers]
+        for lg in loggers:
+            lg.setLevel(logging.ERROR)
+
+        class _Guard:
+            def __enter__(self):
+                return None
+
+            def __exit__(self, exc_type, exc, tb):
+                for lg, level in zip(loggers, levels, strict=False):
+                    lg.setLevel(level)
+                return False
+
+        return _Guard()
+
     try:
         bio = BytesIO(rm_bytes)
-        for block in read_blocks(bio):  # type: ignore
-            counts["blocks"] += 1
-            if isinstance(block, TreeNodeBlock):  # type: ignore
-                counts["tree_nodes"] += 1
-            elif isinstance(block, SceneGroupItemBlock):  # type: ignore
-                counts["group_items"] += 1
-            elif isinstance(block, SceneLineItemBlock):  # type: ignore
-                counts["line_items"] += 1
-            elif isinstance(block, RootTextBlock):  # type: ignore
-                counts["root_text"] += 1
+        with _silence_rmscene_warnings():
+            for block in read_blocks(bio):  # type: ignore
+                counts["blocks"] += 1
+                if isinstance(block, TreeNodeBlock):  # type: ignore
+                    counts["tree_nodes"] += 1
+                elif isinstance(block, SceneGroupItemBlock):  # type: ignore
+                    counts["group_items"] += 1
+                elif isinstance(block, SceneLineItemBlock):  # type: ignore
+                    counts["line_items"] += 1
+                elif isinstance(block, RootTextBlock):  # type: ignore
+                    counts["root_text"] += 1
         return counts
     except Exception:
         return None
 
 
-def _parse_rm_header_version(header: bytes) -> Optional[int]:
+def _parse_rm_header_version(header: bytes) -> int | None:
     """Extract version from the .rm header if present."""
     try:
         s = header.decode("utf-8", errors="ignore")
@@ -216,14 +238,24 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 
     size = path.stat().st_size
 
-    # Inspect .rm files with a focused summary
-    if path.suffix.lower() == ".rm":
+    def _humanize_size(n: int) -> str:
         try:
             import humanize  # type: ignore
+
+            return humanize.naturalsize(n, binary=True)
         except Exception:
-            humanized = f"{size} bytes"
-        else:
-            humanized = humanize.naturalsize(size, binary=True)
+            # Fallback implementation (binary)
+            units = ["bytes", "KiB", "MiB", "GiB", "TiB"]
+            size = float(n)
+            u = 0
+            while size >= 1024.0 and u < len(units) - 1:
+                size /= 1024.0
+            u += 1
+        return f"{int(size)} bytes" if u == 0 else f"{size:.1f} {units[u]}"
+
+    # Inspect .rm files with a focused summary
+    if path.suffix.lower() == ".rm":
+        humanized = _humanize_size(size)
 
         with path.open("rb") as f:
             header = f.read(64)
@@ -237,12 +269,7 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 
     else:
         # rmdoc summary with metadata and first-page info
-        try:
-            import humanize  # type: ignore
-        except Exception:
-            humanized = f"{size} bytes"
-        else:
-            humanized = humanize.naturalsize(size, binary=True)
+        humanized = _humanize_size(size)
 
         print("-- ReMarkable .rmdoc file --")
         print(f"File: {path}")
@@ -261,15 +288,15 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
             except Exception:
                 doc = None
 
-        def _fmt_ms(v: object) -> Optional[str]:
+        def _fmt_ms(v: object) -> str | None:
             try:
                 if isinstance(v, str) and v.isdigit():
                     ms = int(v)
-                elif isinstance(v, (int, float)):
+                elif isinstance(v, int | float):
                     ms = int(v)
                 else:
                     return None
-                dt = datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc)
+                dt = datetime.fromtimestamp(ms / 1000.0, tz=UTC)
                 return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
             except Exception:
                 return None
@@ -332,8 +359,17 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
                         file=sys.stderr,
                     )
             else:
-                from io import BytesIO
+                import logging  # noqa: I001
+                from io import BytesIO  # noqa: I001
 
+                # Silence rmscene warnings about unread data in newer formats
+                rmscene_loggers = [
+                    logging.getLogger("rmscene"),
+                    logging.getLogger("rmscene.tagged_block_reader"),
+                ]
+                levels = [lg.level for lg in rmscene_loggers]
+                for lg in rmscene_loggers:
+                    lg.setLevel(logging.ERROR)
                 try:
                     tree = read_tree(BytesIO(path.read_bytes()))  # type: ignore[arg-type]
                     root = getattr(tree, "root", None)
@@ -344,12 +380,15 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
                                 label = getattr(item, "label", None)
                                 layer_names.append(getattr(label, "value", ""))
                     print(f"Layers: {len(layer_names)}: {', '.join(layer_names)}")
-                except Exception:
+                except Exception as _:
                     # Non-fatal; keep base info
-                    pass
-    except Exception:
+                    layer_names = []
+                finally:
+                    for lg, level in zip(rmscene_loggers, levels, strict=False):
+                        lg.setLevel(level)
+    except Exception as _:
         # Non-fatal; keep base info
-        pass
+        return 0
 
     return 0
 

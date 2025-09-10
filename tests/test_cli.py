@@ -22,6 +22,7 @@ def test_cli_inspect_rmdoc_no_error_and_lists_layers_and_metadata(capsys):
     assert "Name: Sample" in out
     assert "Created time:" in out
     assert "Last modified:" in out
+    assert "Size:" in out and "KiB" in out
     assert "Pages:" in out
     assert "Page 1:" in out
 
