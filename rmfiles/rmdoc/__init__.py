@@ -35,6 +35,20 @@ class Page:
     page_id: str
     rm_bytes: bytes
     template: str | None = None
+    layers: list[LayerInfo] = field(default_factory=list)
+
+
+@dataclass
+class LayerInfo:
+    """Simplified layer information parsed from a page's .rm data.
+
+    Only captures id, label, and visibility to keep the model light and
+    independent of rmscene internals.
+    """
+
+    node_id: tuple[int, int]
+    label: str
+    visible: bool
 
 
 @dataclass
@@ -109,7 +123,15 @@ def read_rmdoc(path: str | Path) -> RmDoc:
                                 if isinstance(v, str):
                                     template = v
                             break
-            pages.append(Page(page_id=page_id, rm_bytes=rm_bytes, template=template))
+            layers = _extract_layers_from_rm_bytes(rm_bytes)
+            pages.append(
+                Page(
+                    page_id=page_id,
+                    rm_bytes=rm_bytes,
+                    template=template,
+                    layers=layers,
+                )
+            )
 
         # Normalize pageCount if present
         if content and isinstance(content, dict):
@@ -184,3 +206,46 @@ def from_notebook(notebook: Any, visible_name: str = "") -> RmDoc:
     doc = RmDoc(doc_id=doc_id, visible_name=visible_name)
     doc.add_page(page_id=page_id, rm_bytes=rm_bytes)
     return doc
+
+
+def _extract_layers_from_rm_bytes(rm_bytes: bytes) -> list[LayerInfo]:
+    """Parse `.rm` data and return a list of top-level layers.
+
+    Returns an empty list if parsing fails.
+    """
+    from io import BytesIO
+
+    try:
+        from rmscene.scene_stream import read_tree  # type: ignore  # noqa: E402,I001
+        from rmscene import scene_items as si  # type: ignore  # noqa: E402,I001
+    except Exception:
+        # rmscene not available; can't parse layers
+        return []
+
+    try:
+        tree = read_tree(BytesIO(rm_bytes))
+    except Exception:
+        return []
+
+    infos: list[LayerInfo] = []
+    root = getattr(tree, "root", None)
+    if root is None:
+        return []
+
+    for item in root.children.values():
+        if isinstance(item, si.Group):  # type: ignore[attr-defined]
+            node_id = getattr(item, "node_id", None)
+            label = getattr(item, "label", None)
+            visible = getattr(item, "visible", None)
+
+            # Extract values safely
+            label_value = getattr(label, "value", "") if label is not None else ""
+            visible_value = (
+                getattr(visible, "value", True) if visible is not None else True
+            )
+            nid = (getattr(node_id, "part1", 0), getattr(node_id, "part2", 0))
+            infos.append(
+                LayerInfo(node_id=nid, label=label_value, visible=visible_value)
+            )
+
+    return infos

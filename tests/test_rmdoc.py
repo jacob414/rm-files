@@ -27,6 +27,14 @@ def test_read_sample_rmdoc():
     assert p.page_id
     assert p.rm_bytes and isinstance(p.rm_bytes, bytes | bytearray)
 
+    # Layers parsed (at least one layer expected)
+    assert isinstance(p.layers, list)
+    assert len(p.layers) >= 1
+    first_layer = p.layers[0]
+    assert hasattr(first_layer, "node_id")
+    assert isinstance(first_layer.label, str)
+    assert isinstance(first_layer.visible, bool)
+
     # .rm header contains "reMarkable"
     assert b"reMarkable" in p.rm_bytes[:64]
 
