@@ -112,3 +112,23 @@ Extend read capability too support layers.
 ** 2025-09-10 16:49
 
 Expose layers in the CLI inspect (print layer count and names).
+
+** 2025-09-10 20:51
+
+No, leave lab.py as it is. Prepare a directory ./examples and place
+python scripts inside it that creates:
+
+  1. One .rm file with a triangle in it
+  2. One with a rectangle in it
+  3. One with a circle in it
+
+The resulting .rm files should go in the ./output directory.
+
+** 2025-09-10 21:54
+
+Bring common functionallity from the three scripts
+ examples/make_<shape>.py
+
+Into the rmfiles package and generalize so that the example scripts
+only will need to call simple convenience wrappers within the
+=rmfiles= package.
