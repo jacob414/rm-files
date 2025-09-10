@@ -66,3 +66,22 @@ commit and push when done.
 
 I see several failures when I run 'make qa'. Iterate and fix until all
 of 'make qa' can run without errors or warnings.
+
+** 2025-09-10 13:58
+
+Implement a small CLI tool that will be used to perform reading/and
+writing of ReMarkable notebooks in the future.
+
+** 2025-09-10 14:08
+
+Commit & push what you've done so far. I'm having trouble finding the
+CLI on my commandline. I have activated the rmfiles venv, but it
+doesn't seem there? If not, ensure that it's installed, then document
+how to use it / find it. If needed add documents about the CLI in the
+docs/decisions directory.  When done documenting, commit & push.
+
+** 2025-09-10
+
+Good, commit & push. Start developing a subpackage in rmfiles,
+=rmfiles.rmdoc=, that should be able too read and write the =.rmdoc=
+
