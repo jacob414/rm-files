@@ -10,4 +10,4 @@ scheme (0001, 0002, ...).
    :maxdepth: 1
 
    0001-qa-split-and-ci
-
+   0002-github-pages-deploy
