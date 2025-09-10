@@ -7,6 +7,7 @@ Welcome to rm-files' documentation.
    :maxdepth: 2
    :caption: Contents
 
+   decisions/index
 
 Overview
 --------
