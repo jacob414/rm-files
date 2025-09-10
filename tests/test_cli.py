@@ -11,13 +11,17 @@ class DummyArgs:
         self.verbose = verbose
 
 
-def test_cli_inspect_rmdoc_no_error_and_lists_layers(capsys):
+def test_cli_inspect_rmdoc_no_error_and_lists_layers_and_metadata(capsys):
     sample = Path("sample-files/Sample.rmdoc")
     assert sample.exists()
 
     rc = _cmd_inspect(DummyArgs(sample))
     assert rc == 0
     out = capsys.readouterr().out
+    assert "-- ReMarkable .rmdoc file --" in out
+    assert "Name: Sample" in out
+    assert "Created time:" in out
+    assert "Last modified:" in out
     assert "Pages:" in out
     assert "Page 1:" in out
 

@@ -12,6 +12,7 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Optional
+from datetime import datetime, timezone
 
 
 def _try_import_rmscene():
@@ -142,7 +143,14 @@ def _rmdoc_counts(path: Path) -> dict[str, int] | None:
     if not imported:
         return None
 
-    read_blocks = imported[0]  # type: ignore[index]
+    (
+        read_blocks,
+        _write_blocks,
+        TreeNodeBlock,
+        SceneGroupItemBlock,
+        SceneLineItemBlock,
+        RootTextBlock,
+    ) = imported  # type: ignore[misc]
 
     try:
         doc = read_rmdoc(path)
@@ -164,7 +172,14 @@ def _rmdoc_counts(path: Path) -> dict[str, int] | None:
         bio = BytesIO(rm_bytes)
         for block in read_blocks(bio):  # type: ignore
             counts["blocks"] += 1
-            # Types are not available here without importing; keep total blocks only
+            if isinstance(block, TreeNodeBlock):  # type: ignore
+                counts["tree_nodes"] += 1
+            elif isinstance(block, SceneGroupItemBlock):  # type: ignore
+                counts["group_items"] += 1
+            elif isinstance(block, SceneLineItemBlock):  # type: ignore
+                counts["line_items"] += 1
+            elif isinstance(block, RootTextBlock):  # type: ignore
+                counts["root_text"] += 1
         return counts
     except Exception:
         return None
@@ -221,23 +236,55 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
             print(f"Version: .lines file version {version}")
 
     else:
-        # Legacy output for non-.rm (e.g., .rmdoc)
-        print(f"File: {path}")
+        # rmdoc summary with metadata and first-page info
         try:
             import humanize  # type: ignore
         except Exception:
-            print(f"Size: {size} bytes")
+            humanized = f"{size} bytes"
         else:
-            print(f"Size: {humanize.naturalsize(size, binary=True)}")
-        with path.open("rb") as f:
-            header = f.read(64)
+            humanized = humanize.naturalsize(size, binary=True)
+
+        print("-- ReMarkable .rmdoc file --")
+        print(f"File: {path}")
+        print(f"Size: {humanized}")
+
+        # Read metadata from archive
         try:
-            header_ascii = header.decode("utf-8", errors="ignore")
+            from rmfiles.rmdoc import read_rmdoc
         except Exception:
-            header_ascii = ""
-        if header_ascii:
-            print(f"Header (ascii): {header_ascii!r}")
-        print("Header (hex):", header.hex(" "))
+            read_rmdoc = None  # type: ignore[assignment]
+
+        doc = None
+        if read_rmdoc is not None:
+            try:
+                doc = read_rmdoc(path)
+            except Exception:
+                doc = None
+
+        def _fmt_ms(v: object) -> Optional[str]:
+            try:
+                if isinstance(v, str) and v.isdigit():
+                    ms = int(v)
+                elif isinstance(v, (int, float)):
+                    ms = int(v)
+                else:
+                    return None
+                dt = datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc)
+                return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+            except Exception:
+                return None
+
+        if doc is not None:
+            md = doc.metadata if isinstance(doc.metadata, dict) else {}
+            name = md.get("visibleName")
+            if isinstance(name, str) and name:
+                print(f"Name: {name}")
+            ct = _fmt_ms(md.get("createdTime"))
+            if ct:
+                print(f"Created time: {ct}")
+            lm = _fmt_ms(md.get("lastModified"))
+            if lm:
+                print(f"Last modified: {lm}")
 
     # Block counts: handle .rm natively and .rmdoc via first page
     counts = _inspect_with_rmscene(path)
@@ -251,10 +298,11 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
             print(f"LineItems: {counts['line_items']}")
             print(f"RootText: {counts['root_text']}")
         else:
-            print(
-                "Blocks: {blocks}, TreeNodes: {tree_nodes}, GroupItems: {group_items}, "
-                "LineItems: {line_items}, RootText: {root_text}".format(**counts)
-            )
+            print(f"Blocks: {counts['blocks']}")
+            print(f"TreeNodes: {counts['tree_nodes']}")
+            print(f"GroupItems: {counts['group_items']}")
+            print(f"LineItems: {counts['line_items']}")
+            print(f"RootText: {counts['root_text']}")
     else:
         if args.verbose:
             print(
