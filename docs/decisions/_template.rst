@@ -14,4 +14,3 @@ One concise paragraph stating the decision.
 Consequences
 ------------
 Positive/negative outcomes, follow-up tasks, trade-offs.
-

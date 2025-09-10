@@ -22,4 +22,3 @@ Consequences
 - Developers can opt-in locally to ``manim`` by installing ``requirements-dev.txt``.
 - QA is standardized via ``make qa`` and enforced pre-commit hooks.
 - Documentation builds and deploys from the main branch.
-

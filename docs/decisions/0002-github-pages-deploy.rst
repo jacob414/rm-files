@@ -18,4 +18,3 @@ Consequences
 - Docs publish automatically, making docs changes visible quickly.
 - If Pages were to be disabled again, deploy would fail; in that scenario, reintroduce a guard or re-enable Pages.
 - Docs remain independent of the main CI build; issues in docs do not block test/build unless configured.
-
