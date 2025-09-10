@@ -17,5 +17,6 @@ setup(
         "numpy",
         "IPython",
         "ipdb",
+        "humanize",
     ],
 )

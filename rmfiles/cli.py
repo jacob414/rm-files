@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import Optional
 
 
 def _try_import_rmscene():
@@ -169,6 +170,24 @@ def _rmdoc_counts(path: Path) -> dict[str, int] | None:
         return None
 
 
+def _parse_rm_header_version(header: bytes) -> Optional[int]:
+    """Extract version from the .rm header if present."""
+    try:
+        s = header.decode("utf-8", errors="ignore")
+    except Exception:
+        return None
+    marker = "reMarkable .lines file, version="
+    if marker in s:
+        try:
+            part = s.split(marker, 1)[1].strip()
+            # Version is first integer after marker
+            ver_str = "".join(ch for ch in part if ch.isdigit())
+            return int(ver_str) if ver_str else None
+        except Exception:
+            return None
+    return None
+
+
 def _cmd_inspect(args: argparse.Namespace) -> int:
     """Inspect a .rm file and print a small summary.
 
@@ -181,30 +200,61 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
         return 2
 
     size = path.stat().st_size
-    print(f"File: {path}")
-    print(f"Size: {size} bytes")
 
-    # Print header bytes for a quick visual check
-    with path.open("rb") as f:
-        header = f.read(64)
-    # Render as ASCII best-effort
-    try:
-        header_ascii = header.decode("utf-8", errors="ignore")
-    except Exception:
-        header_ascii = ""
-    if header_ascii:
-        print(f"Header (ascii): {header_ascii!r}")
-    print("Header (hex):", header.hex(" "))
+    # Inspect .rm files with a focused summary
+    if path.suffix.lower() == ".rm":
+        try:
+            import humanize  # type: ignore
+        except Exception:
+            humanized = f"{size} bytes"
+        else:
+            humanized = humanize.naturalsize(size, binary=True)
+
+        with path.open("rb") as f:
+            header = f.read(64)
+        version = _parse_rm_header_version(header)
+
+        print("-- ReMarkable .rm file --")
+        print(f"File: {path}")
+        print(f"Size: {humanized}")
+        if version is not None:
+            print(f"Version: .lines file version {version}")
+
+    else:
+        # Legacy output for non-.rm (e.g., .rmdoc)
+        print(f"File: {path}")
+        try:
+            import humanize  # type: ignore
+        except Exception:
+            print(f"Size: {size} bytes")
+        else:
+            print(f"Size: {humanize.naturalsize(size, binary=True)}")
+        with path.open("rb") as f:
+            header = f.read(64)
+        try:
+            header_ascii = header.decode("utf-8", errors="ignore")
+        except Exception:
+            header_ascii = ""
+        if header_ascii:
+            print(f"Header (ascii): {header_ascii!r}")
+        print("Header (hex):", header.hex(" "))
 
     # Block counts: handle .rm natively and .rmdoc via first page
     counts = _inspect_with_rmscene(path)
     if counts is None and path.suffix.lower() == ".rmdoc":
         counts = _rmdoc_counts(path)
     if counts:
-        print(
-            "Blocks: {blocks}, TreeNodes: {tree_nodes}, GroupItems: {group_items}, "
-            "LineItems: {line_items}, RootText: {root_text}".format(**counts)
-        )
+        if path.suffix.lower() == ".rm":
+            print(f"Blocks: {counts['blocks']}")
+            print(f"TreeNodes: {counts['tree_nodes']}")
+            print(f"GroupItems: {counts['group_items']}")
+            print(f"LineItems: {counts['line_items']}")
+            print(f"RootText: {counts['root_text']}")
+        else:
+            print(
+                "Blocks: {blocks}, TreeNodes: {tree_nodes}, GroupItems: {group_items}, "
+                "LineItems: {line_items}, RootText: {root_text}".format(**counts)
+            )
     else:
         if args.verbose:
             print(
