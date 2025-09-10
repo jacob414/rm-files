@@ -7,6 +7,11 @@ setup(
     author="Jacob Oscarson",
     author_email="jacob@414soft.com",
     packages=find_packages(),
+    entry_points={
+        "console_scripts": [
+            "rmfiles=rmfiles.cli:main",
+        ]
+    },
     install_requires=[
         "rmscene @ git+https://github.com/ricklupton/rmscene.git",
         "numpy",
