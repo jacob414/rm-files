@@ -13,3 +13,4 @@ scheme (0001, 0002, ...).
    0002-github-pages-deploy
    0003-rmdoc-archive-format
    0004-cli-intro
+   0005-rmscene-dependency
