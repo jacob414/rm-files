@@ -1,4 +1,4 @@
-git+https://github.com/ricklupton/rmscene.git
+rmscene==0.7.0
 numpy
 paramiko
 ipython

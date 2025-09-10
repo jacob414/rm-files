@@ -13,7 +13,7 @@ setup(
         ]
     },
     install_requires=[
-        "rmscene @ git+https://github.com/ricklupton/rmscene.git",
+        "rmscene==0.7.0",
         "numpy",
         "IPython",
         "ipdb",
