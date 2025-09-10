@@ -104,4 +104,3 @@ future‑proof. Commit & push when done.
 
 Add, commmit & push. Then proceed too iterate on 'make qa' untill any
 failures or warnings are fixed.
-

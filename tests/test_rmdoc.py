@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
-import pytest
-
-from rmfiles.rmdoc import read_rmdoc, write_rmdoc, from_notebook, RmDoc
+from rmfiles.rmdoc import RmDoc, from_notebook, read_rmdoc, write_rmdoc
 
 
 def test_read_sample_rmdoc():
@@ -27,7 +25,7 @@ def test_read_sample_rmdoc():
     assert len(doc.pages) == 1
     p = doc.pages[0]
     assert p.page_id
-    assert p.rm_bytes and isinstance(p.rm_bytes, (bytes, bytearray))
+    assert p.rm_bytes and isinstance(p.rm_bytes, bytes | bytearray)
 
     # .rm header contains "reMarkable"
     assert b"reMarkable" in p.rm_bytes[:64]

@@ -25,4 +25,3 @@ Consequences
 - Users can immediately run ``python -m rmfiles --help`` within the repo.
 - Installing the package in editable mode (``pip install -e .``) provides the ``rmfiles`` binary on ``$PATH``.
 - Documented troubleshooting: ensure venv's ``bin`` is first on ``$PATH``, then ``hash -r`` or open a new shell to refresh hashed commands.
-

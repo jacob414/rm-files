@@ -20,12 +20,11 @@ round-trips and local inspection for now.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from pathlib import Path
-import io
 import json
 import uuid
 import zipfile
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 
@@ -98,17 +97,18 @@ def read_rmdoc(path: str | Path) -> RmDoc:
             rm_bytes = z.read(n)
             # Attempt to pull template value from content
             template = None
-            try:
-                cp = content.get("cPages", {})
-                entries = cp.get("pages", [])
-                for e in entries:
-                    if e.get("id") == page_id:
-                        t = e.get("template", {}).get("value")
-                        if isinstance(t, str):
-                            template = t
-                        break
-            except Exception:
-                pass
+            cp = content.get("cPages")
+            if isinstance(cp, dict):
+                entries = cp.get("pages")
+                if isinstance(entries, list):
+                    for e in entries:
+                        if isinstance(e, dict) and e.get("id") == page_id:
+                            t = e.get("template")
+                            if isinstance(t, dict):
+                                v = t.get("value")
+                                if isinstance(v, str):
+                                    template = v
+                            break
             pages.append(Page(page_id=page_id, rm_bytes=rm_bytes, template=template))
 
         # Normalize pageCount if present
@@ -134,8 +134,8 @@ def write_rmdoc(doc: RmDoc, path: str | Path) -> None:
     content = dict(doc.content) if doc.content else {}
     cpages = content.setdefault("cPages", {})
     pages_list = []
-    for i, p in enumerate(doc.pages, start=1):
-        entry = {"id": p.page_id}
+    for _i, p in enumerate(doc.pages, start=1):
+        entry: dict[str, Any] = {"id": p.page_id}
         if p.template:
             entry["template"] = {"timestamp": "1:1", "value": p.template}
         # Fake an index structure similar to sample
@@ -160,12 +160,7 @@ def write_rmdoc(doc: RmDoc, path: str | Path) -> None:
 
 def from_notebook(notebook: Any, visible_name: str = "") -> RmDoc:
     """Build an `RmDoc` with a single page from a rmfiles.notebook instance."""
-    # Defer import to avoid hard dependency from rmdoc to notebook unless used
-    try:
-        from rmscene.tagged_block_common import CrdtId  # noqa: F401
-    except Exception:
-        # We don't actually need this import; keeping to signal optional nature
-        pass
+    # Note: avoid importing ``rmscene`` here to keep the dependency optional
 
     # Render notebook to .rm bytes
     from io import BytesIO

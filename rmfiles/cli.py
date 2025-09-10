@@ -91,7 +91,14 @@ def _inspect_with_rmscene(path: Path) -> dict[str, int] | None:
     if not imported:
         return None
 
-    read_blocks, _write_blocks, TreeNodeBlock, SceneGroupItemBlock, SceneLineItemBlock, RootTextBlock = (  # type: ignore
+    (
+        read_blocks,
+        _write_blocks,
+        TreeNodeBlock,
+        SceneGroupItemBlock,
+        SceneLineItemBlock,
+        RootTextBlock,
+    ) = (  # type: ignore
         imported
     )
 
