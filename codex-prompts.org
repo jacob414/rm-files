@@ -132,3 +132,55 @@ Bring common functionallity from the three scripts
 Into the rmfiles package and generalize so that the example scripts
 only will need to call simple convenience wrappers within the
 =rmfiles= package.
+
+** 2025-09-11 15:47
+
+Time to streamline the API. Ultrathink and do a deep-dive how a
+developer-friendly API for handling notebooks should look and how the
+data structures that implements it should look behind the scenes.
+
+Read Eric Normand's book "Grokking Simplicity" that you can find as a
+text file locally here: ~/src/mine/stenkoll/grokking.txt. Hopefully
+you can find inspiration on how the internals of a "Pythonic"
+=rmfiles.Remarkablenotebook= object should look.
+
+I suggest creating the object should look similar to this pattern:
+
+#+BEGIN_SRC python
+   from rmfiles import RemarkableNotebook
+
+   # [...] other code
+   notebook = RemarkableBotebook(<optional parameter, output path/path.Path object/file object>)
+   # [...] the program uses the notebook object to draw
+   notebook.write(<optional parameter, path/path.Path object/file object>)
+   # The .write() method generates the .rm -file data and writes it to a .rm file
+#+END_SRC
+
+It looks like it already does. That brings us to the public-facing API
+of =ReMarkableNotebook=:
+
+Read this article:
+https://spectrum.ieee.org/history-of-computer-graphics-industry about
+historical computer graphics pioneers got the field of computer
+graphics started. It should inform subsequent development about how
+this step should be implemented.
+
+Then look at how https://github.com/jorenham/numpy_turtle does it's
+drawing. Then combine ideas from the numpy-turtle library with the
+ReMarkable's different drawing tools. You should look at the file
+=~/src/ext/rm/rmscene/src/rmscene/scene_items.py= that I have placed
+on this computer. The API should be able to select an arbitrary
+drawing tool before for every drawing primitive. It should also be
+possible to create text nodes.
+
+Set up an implementation plan and describe it when you are ready, then
+well continue step by step.
+
+If you think there are findings and/or parts of the implementation
+plan that needs to be preserved for subsequent development steps,
+write entries for them in =docs/decisions/=.
+
+
+
+
+

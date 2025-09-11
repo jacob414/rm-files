@@ -1,0 +1,23 @@
+Title: Turtle Semantics — Heading, Movement, and Pen State
+
+Status: Accepted
+
+Context
+- numpy-turtle provides a simple turtle graphics model (forward, rotate, push/pop).
+- For ReMarkable, we draw vector polylines where pen-down/up affects stroke creation.
+
+Decision
+- `RemarkableNotebook` exposes a turtle-like facade with:
+  - `deg` flag (default False) controlling unit for `rotate()` and `heading` property reporting.
+  - `position` (x, y) and `heading` (radians or degrees).
+  - `pen_down()` and `pen_up()` to control whether movement appends stroke points.
+  - `move_to(x, y)`: move cursor without drawing; resets current path start.
+  - `forward(distance)`: move along current heading; append to current path if pen is down.
+  - `rotate(angle)`: rotate heading by angle (deg/rad per `deg` flag).
+  - `push()` / `pop()`: save/restore position, heading, and pen state.
+- `stroke()` emits the current path as a single `si.Line` within the current layer, using the current tool unless overridden.
+
+Consequences
+- Users can build complex strokes incrementally and control continuity explicitly.
+- Push/pop enables L-system–style and recursive drawings.
+

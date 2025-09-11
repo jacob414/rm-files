@@ -1,0 +1,21 @@
+Title: API Direction — Event-Sourced Notebook with Pure Compilation
+
+Status: Accepted
+
+Context
+- We want a developer-friendly API to build ReMarkable drawings while keeping internals simple and testable.
+- Grokking Simplicity suggests separating actions (I/O) from calculations (pure logic) and data.
+
+Decision
+- Introduce a new public facade `rmfiles.RemarkableNotebook` that:
+  - Records user intents as inert events/commands (no I/O).
+  - Compiles those events into `rmscene` blocks using a pure `compile()` method.
+  - Performs the only side effect in `write()` by writing compiled blocks.
+- Provide a turtle-like interface (position, heading, forward/rotate, push/pop) and explicit tool selection, with convenience primitives (rect/circle/polyline/text).
+- Reuse the existing `ReMarkableNotebook` builder to materialize lines/layers into blocks to avoid duplication and ensure correctness.
+
+Consequences
+- Code is easier to test (events and compilation are deterministic).
+- API feels ergonomic for drawing workflows, yet remains explicit about tools and layers.
+- Backward compatibility is preserved: `ReMarkableNotebook` continues to work; `RemarkableNotebook` becomes the new recommended API.
+

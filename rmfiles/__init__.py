@@ -14,10 +14,12 @@ from .generate import (
     write_rm,
 )
 from .notebook import NotebookIdGenerator, NotebookLayer, ReMarkableNotebook, create
+from .remarkable import RemarkableNotebook
 
 __all__ = [
     "create",
     "ReMarkableNotebook",
+    "RemarkableNotebook",
     "NotebookLayer",
     "NotebookIdGenerator",
     "rectangle_points",

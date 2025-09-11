@@ -1,0 +1,93 @@
+* Plan
+
+Here’s a deep-dive proposal for a developer-friendly API and its
+internals, plus a concrete plan to get there.
+
+** Principles
+
+- Separate actions, calculations, data: Inspired by Grokking Simplicity, we’ll
+model user intents as inert data (“commands/events”), keep transformation to
+scene blocks as pure calculations, and isolate writing .rm files as the sole
+action.
+- Immediate-mode drawing, with pure compilation: The Notebook collects draw
+commands. A pure compiler transforms them to rmscene blocks. write() performs the
+side effect.
+- Familiar “turtle”-like ergonomics: Provide chainable, stateful drawing
+operations (position, heading, tool/pen), convenience primitives (line, rect,
+circle, polyline), and transform stack (translate/rotate/scale).
+- Explicit tool selection per-primitive: Each primitive can accept an explicit
+tool config, or you can set a current tool context. Text nodes are first-class.
+- Backward compatible: Keep current ReMarkableNotebook usable while introducing
+RemarkableNotebook as the new façade (with aliasing during transition).
+
+** Public API sketch
+
+- Class: rmfiles.RemarkableNotebook
+    - __init__(output: str|Path|BinaryIO|None=None, *, version="3.1")
+    - Layer management:
+    - `layer(name: str, *, visible=True) -> RemarkableNotebook` (switch/create
+current layer)
+- Tool management:
+    - `tool(*, pen: si.Pen, color: si.PenColor=BLACK, width=2, pressure=100,
+thickness_scale=1.0)`
+    - `with nb.tool(...): ...` (context manager scoping)
+    - Per-call overrides on primitives.
+- Transforms:
+    - `push() / pop()`
+    - `translate(dx, dy)`, `rotate(deg)`, `scale(sx, sy)`
+- Path builder (stateful cursor:
+    - `move_to(x, y)`, `line_to(x, y)`, `stroke(*, tool=None)` (emit line)
+    - `polyline(points, *, close=False, tool=None)`
+- Primitives (convenience, compiled to polylines):
+    - `line(x1, y1, x2, y2, *, tool=None)`
+    - `rect(x, y, w, h, *, tool=None)`
+    - `circle(cx, cy, r, *, segments=None, tool=None)`
+    - `polygon(points, *, tool=None)`
+- Text:
+    - `text(x, y, text, *, width=400, style=si.ParagraphStyle.BASIC,
+color=si.PenColor.BLACK)`
+    - `highlight(text, rectangles, *, color=si.PenColor.YELLOW)` (maps to
+GlyphRange)
+- Output:
+    - `compile() -> list[Block]` (pure)
+    - `write(dest: str|Path|BinaryIO|None=None)` (action, uses dest or
+constructor default)
+
+- Naming and compatibility
+    - Export RemarkableNotebook as the new name.
+    - Keep ReMarkableNotebook as an alias to avoid breaking users.
+    - Migrate internals gradually; reuse current NotebookIdGenerator.
+
+** Data model (behind the scenes)
+
+- Event/Command types (inert data):
+    - SetLayer(name, visible)
+    - SetTool(pen, color, width, pressure, thickness_scale)
+    - PushTransform, PopTransform, Translate(dx,dy), Rotate(deg), Scale(sx,sy)
+    - BeginPath, MoveTo(x,y), LineTo(x,y), Stroke(tool_override?)
+    - Polyline(points, close, tool_override?)
+    - Rect(x,y,w,h, tool_override?), Circle(cx,cy,r,segments?, tool_override?)
+    - Text(x,y,width,text, style, color)
+    - Highlight(text, rectangles, color)
+- State for compiling:
+    - Current layer, tool state, transform stack, path buffer (list of points)
+    - CRDT ID generator (existing NotebookIdGenerator)
+    - Layer registry (name → LayerId)
+- Compiler (pure):
+    - Expands macro commands (Rect/Circle) into polylines.
+    - Applies transforms to geometry.
+    - Emits si.Line + SceneLineItemBlock and links (using our build_line_blocks
+logic).
+    - Emits si.Text (with CRDT items/styles) as appropriate blocks.
+    - Emits si.GlyphRange for highlights as SceneGlyphItemBlock.
+    - Bundles header/meta blocks once, groups by layers (reusing existing logic).
+
+** Mapping to existing code
+
+- We already have:
+    - build_line_blocks, rectangle_points, triangle_points, circle_points (new),
+and write helpers.
+    - Text/GlyphRange types in rmfiles/deps/scene_items.py.
+    - A solid NotebookIdGenerator and the minimal ReMarkableNotebook builder.
+- We’ll build the event-sourced Notebook on top, and the compiler will reuse
+existing block-construction patterns.
