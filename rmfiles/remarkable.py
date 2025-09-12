@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass
-from math import cos, pi, sin, tau
+from math import cos, tau
 from pathlib import Path
 from typing import BinaryIO, Iterable
 
 from rmscene import scene_items as si
-from rmscene.scene_stream import Block
+from rmscene.crdt_sequence import CrdtSequence, CrdtSequenceItem
+from rmscene.scene_stream import Block, RootTextBlock
+from rmscene.tagged_block_common import CrdtId, LwwValue
 
 from .generate import circle_points, rectangle_points, write_rm
 from .notebook import ReMarkableNotebook
@@ -45,7 +47,8 @@ class RemarkableNotebook:
         self._y: float = 0.0
         self._heading: float = 0.0  # radians
         self._pen_down: bool = True
-        self._stack: list[tuple[float, float, float, bool]] = []
+        # stack entries: (x, y, heading, pen_down, tool or None)
+        self._stack: list[tuple[float, float, float, bool, Tool | None]] = []
 
         # Layers and content
         self._current_layer: str = "Layer 1"
@@ -147,12 +150,17 @@ class RemarkableNotebook:
         self._heading = (self._heading + dd) % tau
         return self
 
-    def push(self) -> RemarkableNotebook:
-        self._stack.append((self._x, self._y, self._heading, self._pen_down))
+    def push(self, *, include_tool: bool = False) -> RemarkableNotebook:
+        self._stack.append(
+            (self._x, self._y, self._heading, self._pen_down, self._tool if include_tool else None)
+        )
         return self
 
-    def pop(self) -> RemarkableNotebook:
-        self._x, self._y, self._heading, self._pen_down = self._stack.pop()
+    def pop(self, *, include_tool: bool = False) -> RemarkableNotebook:
+        x, y, heading, pen_down, tool = self._stack.pop()
+        self._x, self._y, self._heading, self._pen_down = x, y, heading, pen_down
+        if include_tool and tool is not None:
+            self._tool = tool
         # Path continuity is undefined after pop; do not implicitly connect
         self._path.clear()
         return self
@@ -210,6 +218,7 @@ class RemarkableNotebook:
         return self
 
     # --- Text (stub: queued, not compiled yet) ---
+    # --- Text (root-level block support) ---
     def text(
         self,
         x: float,
@@ -220,9 +229,10 @@ class RemarkableNotebook:
         style: si.ParagraphStyle = si.ParagraphStyle.BASIC,
         color: si.PenColor = si.PenColor.BLACK,
     ) -> RemarkableNotebook:
-        # Store for future compile; not yet emitted
-        _ = (x, y, text, width, style, color)
-        # TODO: implement in compiler pass
+        # Queue root text blocks for compile
+        if not hasattr(self, "_root_texts"):
+            self._root_texts: list[tuple[float, float, float, si.ParagraphStyle, si.PenColor, str]] = []
+        self._root_texts.append((float(x), float(y), float(width), style, color, text))
         return self
 
     # --- Output ---
@@ -245,7 +255,27 @@ class RemarkableNotebook:
                 )
                 # add_line_to_layer will allocate CRDT IDs for us
                 nb.add_line_to_layer(layer, line.points, color=line.color, tool=line.tool, thickness_scale=line.thickness_scale)
-        return nb.to_blocks()
+        blocks = nb.to_blocks()
+
+        # Append root text blocks if any
+        for (x, y, width, style, color, text) in getattr(self, "_root_texts", []):
+            # Build a minimal si.Text; style mapping is minimal PLAIN/selected style
+            text_items = CrdtSequence(
+                [
+                    CrdtSequenceItem(
+                        item_id=CrdtId(1, 16),
+                        left_id=CrdtId(0, 0),
+                        right_id=CrdtId(0, 0),
+                        deleted_length=0,
+                        value=text,
+                    )
+                ]
+            )
+            styles = {CrdtId(0, 0): LwwValue(timestamp=CrdtId(1, 15), value=style)}
+            text_value = si.Text(items=text_items, styles=styles, pos_x=x, pos_y=y, width=width)
+            blocks.append(RootTextBlock(block_id=CrdtId(0, 0), value=text_value))
+
+        return blocks
 
     def write(self, dest: str | Path | BinaryIO | None = None) -> None:
         pathlike: str | Path | None

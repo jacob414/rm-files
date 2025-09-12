@@ -180,7 +180,23 @@ If you think there are findings and/or parts of the implementation
 plan that needs to be preserved for subsequent development steps,
 write entries for them in =docs/decisions/=.
 
+** 2025-09-11 18:28
 
+Your questions:
 
+  - Should push/pop include tool state or only position/heading/pen state? I
+  propose include pen state; exclude tool by default to keep tool selection
+  deliberate.
 
+  It's probably good practice to include the tool state, but optional,
+  then keep the last state and use it if a future call doesn't provide
+  a pen state.
+nn
+  - Do you prefer deg=True by default to match numpy-turtle’s typical degree
+  usage, or keep radians default like now? I propose default deg=False (radians),
+  but happy to switch.
 
+  Match numpy's degree usage for now.
+
+Since we'll do it all, do one at a time but add/commit/push between
+text/highlight support and the small example script.
