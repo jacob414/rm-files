@@ -36,7 +36,7 @@ class RemarkableNotebook:
         output: str | Path | BinaryIO | None = None,
         *,
         version: str = "3.1",
-        deg: bool = False,
+        deg: bool = True,
     ) -> None:
         self._output = output
         self._version = version
@@ -54,6 +54,8 @@ class RemarkableNotebook:
         self._current_layer: str = "Layer 1"
         # lines[layer] = list[(points, Tool|None)]
         self._lines: dict[str, list[tuple[list[si.Point], Tool | None]]] = {}
+        # highlights[layer] = list[(text, color, [rectangles])]
+        self._highlights: dict[str, list[tuple[str, si.PenColor, list[si.Rectangle]]]] = {}
         # current path buffer
         self._path: list[si.Point] = []
         # current tool context
@@ -235,6 +237,17 @@ class RemarkableNotebook:
         self._root_texts.append((float(x), float(y), float(width), style, color, text))
         return self
 
+    def highlight(
+        self,
+        text: str,
+        rectangles: Iterable[tuple[float, float, float, float]],
+        *,
+        color: si.PenColor = si.PenColor.YELLOW,
+    ) -> RemarkableNotebook:
+        rects = [si.Rectangle(x=float(x), y=float(y), w=float(w), h=float(h)) for (x, y, w, h) in rectangles]
+        self._highlights.setdefault(self._current_layer, []).append((text, color, rects))
+        return self
+
     # --- Output ---
     def compile(self) -> list[Block]:
         # Materialize into the existing ReMarkableNotebook
@@ -255,6 +268,15 @@ class RemarkableNotebook:
                 )
                 # add_line_to_layer will allocate CRDT IDs for us
                 nb.add_line_to_layer(layer, line.points, color=line.color, tool=line.tool, thickness_scale=line.thickness_scale)
+        # Add highlights
+        for name, items in self._highlights.items():
+            layer = layer_objs.get(name)
+            if layer is None:
+                layer = nb.create_layer(name)
+                layer_objs[name] = layer
+            for text, color, rects in items:
+                nb.add_highlight_to_layer(layer, text=text, color=color, rectangles=rects)
+
         blocks = nb.to_blocks()
 
         # Append root text blocks if any

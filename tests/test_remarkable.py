@@ -1,0 +1,36 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from rmfiles import RemarkableNotebook
+from rmscene import scene_items as si
+from rmscene.scene_stream import SceneGlyphItemBlock, SceneLineItemBlock, RootTextBlock, read_blocks
+
+
+def test_turtle_square_and_text_and_highlight(tmp_path: Path) -> None:
+    out = tmp_path / "turtle.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").tool(pen=si.Pen.MARKER_1, color=si.PenColor.BLACK, width=3)
+    nb.move_to(10, 10).pen_down()
+    for _ in range(4):
+        nb.forward(20).rotate(90)
+    nb.stroke()
+    nb.text(5, 5, "Hello", width=200, style=si.ParagraphStyle.HEADING)
+    nb.highlight("Hi", [(10.0, 10.0, 5.0, 2.0)], color=si.PenColor.YELLOW)
+    nb.write(out)
+
+    assert out.exists() and out.stat().st_size > 0
+
+    # Inspect blocks for presence of line, root text, and glyph
+    has_line = has_text = has_glyph = False
+    with out.open("rb") as f:
+        for b in read_blocks(f):  # type: ignore
+            if isinstance(b, SceneLineItemBlock):
+                has_line = True
+            elif isinstance(b, RootTextBlock):
+                has_text = True
+            elif isinstance(b, SceneGlyphItemBlock):
+                has_glyph = True
+
+    assert has_line and has_text and has_glyph
+

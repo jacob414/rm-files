@@ -47,11 +47,18 @@ class NotebookLayer:
         self.visible = visible
         self.lines: list[si.Line] = []
         self.line_ids: list[CrdtId] = []
+        self.glyphs: list[si.GlyphRange] = []
+        self.glyph_ids: list[CrdtId] = []
 
     def add_line(self, line: si.Line, line_id: CrdtId) -> None:
         """Add a line to this layer."""
         self.lines.append(line)
         self.line_ids.append(line_id)
+
+    def add_glyph(self, glyph: si.GlyphRange, glyph_id: CrdtId) -> None:
+        """Add a glyph highlight to this layer."""
+        self.glyphs.append(glyph)
+        self.glyph_ids.append(glyph_id)
 
 
 class ReMarkableNotebook:
@@ -96,6 +103,26 @@ class ReMarkableNotebook:
         )
         layer.add_line(line, line_id)
         return line
+
+    def add_highlight_to_layer(
+        self,
+        layer: NotebookLayer,
+        *,
+        text: str,
+        color: si.PenColor = si.PenColor.YELLOW,
+        rectangles: list[si.Rectangle] | None = None,
+        start: int | None = None,
+        length: int | None = None,
+    ) -> si.GlyphRange:
+        """Add a text highlight (GlyphRange) to a layer."""
+        if rectangles is None:
+            rectangles = []
+        if length is None:
+            length = len(text)
+        glyph_id = self.id_generator.next_id()
+        glyph = si.GlyphRange(start=start, length=length, text=text, color=color, rectangles=rectangles)
+        layer.add_glyph(glyph, glyph_id)
+        return glyph
 
     def create_triangle(
         self,
@@ -223,6 +250,33 @@ class ReMarkableNotebook:
                     parent_id=layer.layer_id, item=line_group_item
                 )
                 blocks.append(line_group_block)
+
+            # Add glyphs (highlights) to layer
+            for glyph, glyph_id in zip(layer.glyphs, layer.glyph_ids, strict=True):
+                glyph_seq_item = CrdtSequenceItem(
+                    item_id=glyph_id,
+                    left_id=CrdtId(0, 0),
+                    right_id=CrdtId(0, 0),
+                    deleted_length=0,
+                    value=glyph,
+                )
+                glyph_block = SceneGlyphItemBlock(
+                    parent_id=layer.layer_id, item=glyph_seq_item
+                )
+                blocks.append(glyph_block)
+                # Link glyph id to layer's children
+                glyph_group_item_id = self.id_generator.next_id()
+                glyph_group_item = CrdtSequenceItem(
+                    item_id=glyph_group_item_id,
+                    left_id=CrdtId(0, 0),
+                    right_id=CrdtId(0, 0),
+                    deleted_length=0,
+                    value=glyph_id,
+                )
+                glyph_group_block = SceneGroupItemBlock(
+                    parent_id=layer.layer_id, item=glyph_group_item
+                )
+                blocks.append(glyph_group_block)
 
         return blocks
 
