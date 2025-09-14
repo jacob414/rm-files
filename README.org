@@ -50,7 +50,7 @@ This repo includes a small CLI used for future notebook read/write workflows.
 *** If the =rmfiles= command isn’t found, either:
 - Run via module (no install needed from repo root): =python -m rmfiles --help=
 - Or ensure the console script is installed into your venv and visible on PATH:
-  - `source .venv/bin/activate && pip install -e .`
+  - =source .venv/bin/activate && pip install -e=
   - =which rmfiles= should point inside =.venv/bin/rmfiles=
   - If your shell caches commands, refresh: =hash -r= (bash) or restart the shell
 
