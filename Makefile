@@ -15,7 +15,10 @@ SPHINX_BUILD := $(VENV_DIR)/bin/sphinx-build
 PRECOMMIT := $(VENV_DIR)/bin/pre-commit
 
 $(VENV_DIR)/bin/activate: requirements.txt
-	python$(MY_PYTHON_VERSION) -m venv $(VENV_DIR)
+	@set -e; \
+	PYBIN=python$(MY_PYTHON_VERSION); \
+	command -v $$PYBIN >/dev/null 2>&1 || PYBIN=python3; \
+	$$PYBIN -m venv $(VENV_DIR);
 	. $(VENV_DIR)/bin/activate; pip install -r requirements.txt
 
 venv: $(VENV_DIR)/bin/activate ## Create venv and install runtime deps
@@ -52,24 +55,70 @@ dead-code: install-dev ## Dead code scan (Vulture)
 	$(VULTURE) rmfiles tests || true
 
 prepare-samples: venv ## Ensure sample test artifacts exist
-	$(PYTHON) - << 'PY'
-from pathlib import Path
-try:
-    # Prefer local rmfiles; fall back gracefully if deps missing
-    from rmfiles.notebook import create
-except Exception:
-    raise SystemExit(0)
+	$(PYTHON) -c "from pathlib import Path; import sys;\
+try:\
+    from rmfiles.notebook import create\
+except Exception:\
+    sys.exit(0)\
+p=Path('sample-files/triangel.rm'); p.parent.mkdir(parents=True, exist_ok=True);\
+import os;\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+if not p.exists(): nb=create(); layer=nb.create_layer('Layer 1'); nb.create_triangle(layer, center_x=150, center_y=150, size=100); nb.write(str(p))"
 
-p = Path('sample-files/triangel.rm')
-p.parent.mkdir(parents=True, exist_ok=True)
-if not p.exists():
-    nb = create()
-    layer = nb.create_layer('Layer 1')
-    nb.create_triangle(layer, center_x=150, center_y=150, size=100)
-    nb.write(str(p))
-PY
-
-test: install-dev prepare-samples ## Run tests with coverage
+test: install-dev ## Run tests with coverage
+	# Ensure sample .rm exists (ignored by git)
+	@if [ ! -f sample-files/triangel.rm ]; then \
+		$(PYTHON) examples/make_triangle.py --out sample-files/triangel.rm >/dev/null 2>&1 || true; \
+	fi
 	$(PYTEST) -v --cov=rmfiles --cov-report=term-missing --cov-report=html
 
 test-quick: venv ## Run tests (no coverage)
