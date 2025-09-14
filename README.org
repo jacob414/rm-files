@@ -44,7 +44,7 @@ experiment with =scene.py= or any rendering tasks.
 
 This repo includes a small CLI used for future notebook read/write workflows.
 
-- Install locally (editable): =pip install -e".
+- Install locally (editable): =pip install -e=.
 - Run: =rmfiles --help=.
 
 *** If the =rmfiles= command isn’t found, either:
