@@ -51,7 +51,25 @@ security: install-dev ## Security scan (Bandit)
 dead-code: install-dev ## Dead code scan (Vulture)
 	$(VULTURE) rmfiles tests || true
 
-test: install-dev ## Run tests with coverage
+prepare-samples: venv ## Ensure sample test artifacts exist
+	$(PYTHON) - << 'PY'
+from pathlib import Path
+try:
+    # Prefer local rmfiles; fall back gracefully if deps missing
+    from rmfiles.notebook import create
+except Exception:
+    raise SystemExit(0)
+
+p = Path('sample-files/triangel.rm')
+p.parent.mkdir(parents=True, exist_ok=True)
+if not p.exists():
+    nb = create()
+    layer = nb.create_layer('Layer 1')
+    nb.create_triangle(layer, center_x=150, center_y=150, size=100)
+    nb.write(str(p))
+PY
+
+test: install-dev prepare-samples ## Run tests with coverage
 	$(PYTEST) -v --cov=rmfiles --cov-report=term-missing --cov-report=html
 
 test-quick: venv ## Run tests (no coverage)
