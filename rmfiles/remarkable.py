@@ -297,6 +297,79 @@ class RemarkableNotebook:
         )
         return self
 
+    def regular_polygon(
+        self,
+        n: int,
+        cx: float,
+        cy: float,
+        r: float,
+        *,
+        rotation: float = 0.0,
+        tool: Tool | None = None,
+    ) -> RemarkableNotebook:
+        """Add a regular n-gon centered at (cx, cy) with radius r.
+
+        The path is closed by repeating the first point.
+        """
+        if n < 3:
+            return self
+        ang0 = rotation * tau / 360 if self._deg else rotation
+        pts: list[si.Point] = []
+        w = (tool or self._tool).width
+        p = (tool or self._tool).pressure
+        for i in range(n):
+            ang = ang0 + (tau * i / n)
+            x = cx + r * cos(ang)
+            y = cy + r * sin(ang)
+            pts.append(
+                si.Point(
+                    x=float(x), y=float(y), speed=0, direction=0, width=w, pressure=p
+                )
+            )
+        pts.append(pts[0])
+        self._lines.setdefault(self._current_layer, []).append(
+            (pts, tool, self._affine)
+        )
+        return self
+
+    def star(
+        self,
+        cx: float,
+        cy: float,
+        r: float,
+        *,
+        points: int = 5,
+        inner_ratio: float = 0.5,
+        rotation: float = 0.0,
+        tool: Tool | None = None,
+    ) -> RemarkableNotebook:
+        """Add a star polygon with given points and inner radius ratio.
+
+        The path alternates outer and inner vertices and is closed.
+        """
+        n = max(2, int(points))
+        if n < 2:
+            return self
+        ang0 = rotation * tau / 360 if self._deg else rotation
+        w = (tool or self._tool).width
+        p = (tool or self._tool).pressure
+        pts: list[si.Point] = []
+        for i in range(n * 2):
+            rr = r if i % 2 == 0 else r * inner_ratio
+            ang = ang0 + (tau * i / (n * 2))
+            x = cx + rr * cos(ang)
+            y = cy + rr * sin(ang)
+            pts.append(
+                si.Point(
+                    x=float(x), y=float(y), speed=0, direction=0, width=w, pressure=p
+                )
+            )
+        pts.append(pts[0])
+        self._lines.setdefault(self._current_layer, []).append(
+            (pts, tool, self._affine)
+        )
+        return self
+
     # --- Text (stub: queued, not compiled yet) ---
     # --- Text (root-level block support) ---
     def text(
