@@ -183,6 +183,33 @@ class RemarkableNotebook:
         self._heading = (self._heading + dd) % tau
         return self
 
+    # --- Turtle aliases / ergonomics ---
+    def goto(self, x: float, y: float) -> RemarkableNotebook:
+        return self.move_to(x, y)
+
+    def left(self, angle: float) -> RemarkableNotebook:
+        return self.rotate(angle)
+
+    def right(self, angle: float) -> RemarkableNotebook:
+        return self.rotate(-angle)
+
+    def setheading(self, angle: float) -> RemarkableNotebook:
+        """Set absolute heading. Interprets `angle` in deg or rad per current mode."""
+        self._heading = (angle * tau / 360 if self._deg else angle) % tau
+        return self
+
+    def home(self) -> RemarkableNotebook:
+        """Return to origin (0,0) and reset heading to 0. Clears current path."""
+        self._x, self._y = 0.0, 0.0
+        self._heading = 0.0
+        self._path.clear()
+        return self
+
+    def set_deg(self, flag: bool) -> RemarkableNotebook:
+        """Toggle degree mode for turtle operations and heading display."""
+        self._deg = bool(flag)
+        return self
+
     def push(self, *, include_tool: bool = False) -> RemarkableNotebook:
         self._stack.append(
             (
