@@ -53,8 +53,18 @@ class RemarkableNotebook:
 
         # Layers and content
         self._current_layer: str = "Layer 1"
-        # lines[layer] = list[(points, Tool|None)]
-        self._lines: dict[str, list[tuple[list[si.Point], Tool | None]]] = {}
+        # lines[layer] = list[(points, Tool|None, affine)]
+        # affine is a 2D transform matrix (a, b, c, d, tx, ty)
+        self._lines: dict[
+            str,
+            list[
+                tuple[
+                    list[si.Point],
+                    Tool | None,
+                    tuple[float, float, float, float, float, float],
+                ]
+            ],
+        ] = {}
         # highlights[layer] = list[(text, color, [rectangles])]
         self._highlights: dict[
             str, list[tuple[str, si.PenColor, list[si.Rectangle]]]
@@ -63,6 +73,17 @@ class RemarkableNotebook:
         self._path: list[si.Point] = []
         # current tool context
         self._tool: Tool = Tool(pen=si.Pen.BALLPOINT_1)
+
+        # Transform stack (applies only to geometry, not turtle heading)
+        self._affine: tuple[float, float, float, float, float, float] = (
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+        )
+        self._affine_stack: list[tuple[float, float, float, float, float, float]] = []
 
     # --- Layer management ---
     def layer(self, name: str, *, visible: bool = True) -> RemarkableNotebook:
@@ -203,7 +224,9 @@ class RemarkableNotebook:
         pts = list(self._path)
         self._path.clear()
         if len(pts) >= 2:
-            self._lines.setdefault(self._current_layer, []).append((pts, tool))
+            self._lines.setdefault(self._current_layer, []).append(
+                (pts, tool, self._affine)
+            )
         return self
 
     def polyline(
@@ -226,7 +249,9 @@ class RemarkableNotebook:
         ]
         if close and pts:
             pts.append(pts[0])
-        self._lines.setdefault(self._current_layer, []).append((pts, tool))
+        self._lines.setdefault(self._current_layer, []).append(
+            (pts, tool, self._affine)
+        )
         return self
 
     def line(
@@ -245,7 +270,9 @@ class RemarkableNotebook:
             width=(tool or self._tool).width,
             pressure=(tool or self._tool).pressure,
         )
-        self._lines.setdefault(self._current_layer, []).append((pts, tool))
+        self._lines.setdefault(self._current_layer, []).append(
+            (pts, tool, self._affine)
+        )
         return self
 
     def circle(
@@ -265,7 +292,9 @@ class RemarkableNotebook:
             width=(tool or self._tool).width,
             pressure=(tool or self._tool).pressure,
         )
-        self._lines.setdefault(self._current_layer, []).append((pts, tool))
+        self._lines.setdefault(self._current_layer, []).append(
+            (pts, tool, self._affine)
+        )
         return self
 
     # --- Text (stub: queued, not compiled yet) ---
@@ -313,12 +342,24 @@ class RemarkableNotebook:
             layer_objs[name] = nb.create_layer(name)
         for name, lines in self._lines.items():
             layer = layer_objs[name]
-            for pts, tool in lines:
+            for pts, tool, aff in lines:
                 t = tool or self._tool
+                # Apply affine to points (geometry only)
+                tx_pts = [
+                    si.Point(
+                        x=self._aff_apply(p.x, p.y, aff)[0],
+                        y=self._aff_apply(p.x, p.y, aff)[1],
+                        speed=p.speed,
+                        direction=p.direction,
+                        width=p.width,
+                        pressure=p.pressure,
+                    )
+                    for p in pts
+                ]
                 line = si.Line(
                     color=t.color,
                     tool=t.pen,
-                    points=pts,
+                    points=tx_pts,
                     thickness_scale=t.thickness_scale,
                     starting_length=0.0,
                 )
@@ -364,6 +405,62 @@ class RemarkableNotebook:
             blocks.append(RootTextBlock(block_id=CrdtId(0, 0), value=text_value))
 
         return blocks
+
+    # --- Transform helpers (geometry only) ---
+    @staticmethod
+    def _aff_mul(
+        m1: tuple[float, float, float, float, float, float],
+        m2: tuple[float, float, float, float, float, float],
+    ) -> tuple[float, float, float, float, float, float]:
+        a1, b1, c1, d1, tx1, ty1 = m1
+        a2, b2, c2, d2, tx2, ty2 = m2
+        return (
+            a1 * a2 + c1 * b2,
+            b1 * a2 + d1 * b2,
+            a1 * c2 + c1 * d2,
+            b1 * c2 + d1 * d2,
+            a1 * tx2 + c1 * ty2 + tx1,
+            b1 * tx2 + d1 * ty2 + ty1,
+        )
+
+    @staticmethod
+    def _aff_apply(
+        x: float,
+        y: float,
+        m: tuple[float, float, float, float, float, float],
+    ) -> tuple[float, float]:
+        a, b, c, d, tx, ty = m
+        return (a * x + c * y + tx, b * x + d * y + ty)
+
+    def tf_translate(self, dx: float, dy: float) -> RemarkableNotebook:
+        t = (1.0, 0.0, 0.0, 1.0, float(dx), float(dy))
+        self._affine = self._aff_mul(self._affine, t)
+        return self
+
+    def tf_scale(self, sx: float, sy: float) -> RemarkableNotebook:
+        s = (float(sx), 0.0, 0.0, float(sy), 0.0, 0.0)
+        self._affine = self._aff_mul(self._affine, s)
+        return self
+
+    def tf_rotate(self, angle: float) -> RemarkableNotebook:
+        from math import cos as _cos
+        from math import sin as _sin
+        from math import tau as _tau
+
+        ang = angle * _tau / 360 if self._deg else angle
+        ca = _cos(ang)
+        sa = _sin(ang)
+        r = (ca, sa, -sa, ca, 0.0, 0.0)
+        self._affine = self._aff_mul(self._affine, r)
+        return self
+
+    def tf_push(self) -> RemarkableNotebook:
+        self._affine_stack.append(self._affine)
+        return self
+
+    def tf_pop(self) -> RemarkableNotebook:
+        self._affine = self._affine_stack.pop()
+        return self
 
     def write(self, dest: str | Path | BinaryIO | None = None) -> None:
         pathlike: str | Path | None
