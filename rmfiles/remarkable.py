@@ -370,6 +370,83 @@ class RemarkableNotebook:
         )
         return self
 
+    def ellipse(
+        self,
+        cx: float,
+        cy: float,
+        rx: float,
+        ry: float,
+        *,
+        segments: int = 96,
+        rotation: float = 0.0,
+        tool: Tool | None = None,
+    ) -> RemarkableNotebook:
+        """Add an ellipse centered at (cx, cy) with radii rx, ry.
+
+        The path is closed by repeating the first point. `rotation` rotates the
+        ellipse around its center.
+        """
+        seg = max(8, int(segments))
+        rot = rotation * tau / 360 if self._deg else rotation
+        cr = cos(rot)
+        sr = sin(rot)
+        w = (tool or self._tool).width
+        p = (tool or self._tool).pressure
+        pts: list[si.Point] = []
+        for i in range(seg):
+            th = tau * i / seg
+            x0 = rx * cos(th)
+            y0 = ry * sin(th)
+            x = cx + x0 * cr - y0 * sr
+            y = cy + x0 * sr + y0 * cr
+            pts.append(
+                si.Point(
+                    x=float(x), y=float(y), speed=0, direction=0, width=w, pressure=p
+                )
+            )
+        if pts:
+            pts.append(pts[0])
+        self._lines.setdefault(self._current_layer, []).append(
+            (pts, tool, self._affine)
+        )
+        return self
+
+    def arc(
+        self,
+        cx: float,
+        cy: float,
+        r: float,
+        *,
+        start: float,
+        sweep: float,
+        segments: int = 32,
+        tool: Tool | None = None,
+    ) -> RemarkableNotebook:
+        """Add a circular arc with radius r from start by sweep.
+
+        The arc is not closed; it consists of `segments + 1` points sampled
+        uniformly along the angle.
+        """
+        seg = max(1, int(segments))
+        s0 = start * tau / 360 if self._deg else start
+        sw = sweep * tau / 360 if self._deg else sweep
+        w = (tool or self._tool).width
+        p = (tool or self._tool).pressure
+        pts: list[si.Point] = []
+        for i in range(seg + 1):
+            th = s0 + sw * (i / seg)
+            x = cx + r * cos(th)
+            y = cy + r * sin(th)
+            pts.append(
+                si.Point(
+                    x=float(x), y=float(y), speed=0, direction=0, width=w, pressure=p
+                )
+            )
+        self._lines.setdefault(self._current_layer, []).append(
+            (pts, tool, self._affine)
+        )
+        return self
+
     # --- Text (stub: queued, not compiled yet) ---
     # --- Text (root-level block support) ---
     def text(

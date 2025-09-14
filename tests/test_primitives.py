@@ -30,3 +30,24 @@ def test_star_writes_and_has_line(tmp_path: Path) -> None:
     assert out.exists() and out.stat().st_size > 0
     with out.open("rb") as f:
         assert any(isinstance(b, SceneLineItemBlock) for b in read_blocks(f))  # type: ignore
+
+
+def test_ellipse_closed_and_line(tmp_path: Path) -> None:
+    out = tmp_path / "ellipse.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("L").ellipse(cx=200, cy=200, rx=80, ry=40, segments=60, rotation=30)
+    nb.write(out)
+    assert out.exists() and out.stat().st_size > 0
+    # We don't parse points here; just ensure a line block exists
+    with out.open("rb") as f:
+        assert any(isinstance(b, SceneLineItemBlock) for b in read_blocks(f))  # type: ignore
+
+
+def test_arc_segment_count_and_line(tmp_path: Path) -> None:
+    out = tmp_path / "arc.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("L").arc(cx=150, cy=150, r=70, start=45, sweep=180, segments=24)
+    nb.write(out)
+    assert out.exists() and out.stat().st_size > 0
+    with out.open("rb") as f:
+        assert any(isinstance(b, SceneLineItemBlock) for b in read_blocks(f))  # type: ignore
