@@ -4,7 +4,7 @@ Utilities to programmatically generate simple .rm files.
 This module exposes helpers to build a minimal reMarkable v6 scene with
 stroke data using the `rmscene` library, suitable for experimentation and
 further composition.
-"""
+,"""
 
 from __future__ import annotations
 

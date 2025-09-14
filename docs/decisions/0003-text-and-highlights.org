@@ -1,0 +1,17 @@
+* Text and Highlights — Modeling Strategy
+:PROPERTIES:
+:Status: Accepted (phase 1)
+:END:
+
+** Context
+- =rmfiles/deps/scene_items.py= includes =Text= and =GlyphRange= types.
+- We want =RemarkableNotebook.text()= and =RemarkableNotebook.highlight()= in the public API.
+
+** Decision (phase 1)
+- Provide API method =RemarkableNotebook.text(...)= to enqueue text as root text blocks (=RootTextBlock=) with position and width.
+- Defer highlight (=GlyphRange=) implementation initially; API shape is =highlight(text, rectangles, color=...)=. Implementation now compiles highlights into layers using =SceneGlyphItemBlock=.
+- Keep the compiler pure; continue to reuse our existing block assembly for layers and lines and then append root text blocks.
+
+** Consequences
+- Unblocks the API shape now while allowing incremental implementation without breaking changes.
+
