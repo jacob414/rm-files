@@ -447,6 +447,86 @@ class RemarkableNotebook:
         )
         return self
 
+    def rounded_rect(
+        self,
+        x: float,
+        y: float,
+        w: float,
+        h: float,
+        *,
+        radius: float = 10.0,
+        segments: int = 8,
+        tool: Tool | None = None,
+    ) -> RemarkableNotebook:
+        """Add a rounded rectangle polyline (closed).
+
+        `radius` is clamped to half of min(w, h). `segments` controls sampling
+        for each quarter-arc corner.
+        """
+        if w <= 0 or h <= 0:
+            return self
+        r = float(max(0.0, min(radius, w / 2.0, h / 2.0)))
+        k = max(1, int(segments))
+        wtool = (tool or self._tool).width
+        ptool = (tool or self._tool).pressure
+
+        def pt(px: float, py: float) -> si.Point:
+            return si.Point(
+                x=float(px),
+                y=float(py),
+                speed=0,
+                direction=0,
+                width=wtool,
+                pressure=ptool,
+            )
+
+        pts: list[si.Point] = []
+        # Start at top edge, left of top-right corner
+        pts.append(pt(x + r, y))
+        # Top edge
+        pts.append(pt(x + w - r, y))
+        # Top-right corner (center cx,cy = x+w-r, y+r), angles -90 -> 0
+        cx_tr, cy_tr = x + w - r, y + r
+        for i in range(1, k + 1):
+            ang = -tau / 4 + (tau / 4) * (i / k)
+            px = cx_tr + r * cos(ang)
+            py = cy_tr + r * sin(ang)
+            pts.append(pt(px, py))
+        # Right edge down to bottom-right corner start
+        pts.append(pt(x + w, y + h - r))
+        # Bottom-right corner 0 -> 90
+        cx_br, cy_br = x + w - r, y + h - r
+        for i in range(1, k + 1):
+            ang = 0.0 + (tau / 4) * (i / k)
+            px = cx_br + r * cos(ang)
+            py = cy_br + r * sin(ang)
+            pts.append(pt(px, py))
+        # Bottom edge to bottom-left
+        pts.append(pt(x + r, y + h))
+        # Bottom-left corner 90 -> 180
+        cx_bl, cy_bl = x + r, y + h - r
+        for i in range(1, k + 1):
+            ang = tau / 4 + (tau / 4) * (i / k)
+            px = cx_bl + r * cos(ang)
+            py = cy_bl + r * sin(ang)
+            pts.append(pt(px, py))
+        # Left edge up to top-left
+        pts.append(pt(x, y + r))
+        # Top-left corner 180 -> 270
+        cx_tl, cy_tl = x + r, y + r
+        for i in range(1, k + 1):
+            ang = tau / 2 + (tau / 4) * (i / k)
+            px = cx_tl + r * cos(ang)
+            py = cy_tl + r * sin(ang)
+            pts.append(pt(px, py))
+        # Close
+        pts.append(pt(x + r, y))
+
+        self._lines.setdefault(self._current_layer, []).append(
+            (pts, tool, self._affine)
+        )
+        return self
+
     # --- Text (stub: queued, not compiled yet) ---
     # --- Text (root-level block support) ---
     def text(

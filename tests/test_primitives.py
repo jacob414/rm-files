@@ -51,3 +51,13 @@ def test_arc_segment_count_and_line(tmp_path: Path) -> None:
     assert out.exists() and out.stat().st_size > 0
     with out.open("rb") as f:
         assert any(isinstance(b, SceneLineItemBlock) for b in read_blocks(f))  # type: ignore
+
+
+def test_rounded_rect_writes_and_has_line(tmp_path: Path) -> None:
+    out = tmp_path / "rounded.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("L").rounded_rect(50, 60, 220, 140, radius=20, segments=6)
+    nb.write(out)
+    assert out.exists() and out.stat().st_size > 0
+    with out.open("rb") as f:
+        assert any(isinstance(b, SceneLineItemBlock) for b in read_blocks(f))  # type: ignore
