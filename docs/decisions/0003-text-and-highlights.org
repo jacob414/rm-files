@@ -14,4 +14,3 @@
 
 ** Consequences
 - Unblocks the API shape now while allowing incremental implementation without breaking changes.
-

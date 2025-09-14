@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from contextlib import contextmanager
 from dataclasses import dataclass
-from math import cos, tau
+from math import cos, sin, tau
 from pathlib import Path
-from typing import BinaryIO, Iterable
+from typing import BinaryIO
 
 from rmscene import scene_items as si
 from rmscene.crdt_sequence import CrdtSequence, CrdtSequenceItem
@@ -12,7 +13,7 @@ from rmscene.scene_stream import Block, RootTextBlock
 from rmscene.tagged_block_common import CrdtId, LwwValue
 
 from .generate import circle_points, rectangle_points, write_rm
-from .notebook import ReMarkableNotebook
+from .notebook import NotebookLayer, ReMarkableNotebook
 
 
 @dataclass
@@ -55,7 +56,9 @@ class RemarkableNotebook:
         # lines[layer] = list[(points, Tool|None)]
         self._lines: dict[str, list[tuple[list[si.Point], Tool | None]]] = {}
         # highlights[layer] = list[(text, color, [rectangles])]
-        self._highlights: dict[str, list[tuple[str, si.PenColor, list[si.Rectangle]]]] = {}
+        self._highlights: dict[
+            str, list[tuple[str, si.PenColor, list[si.Rectangle]]]
+        ] = {}
         # current path buffer
         self._path: list[si.Point] = []
         # current tool context
@@ -114,7 +117,14 @@ class RemarkableNotebook:
         # Start a new path at current position if empty
         if not self._path:
             self._path.append(
-                si.Point(x=self._x, y=self._y, speed=0, direction=0, width=self._tool.width, pressure=self._tool.pressure)
+                si.Point(
+                    x=self._x,
+                    y=self._y,
+                    speed=0,
+                    direction=0,
+                    width=self._tool.width,
+                    pressure=self._tool.pressure,
+                )
             )
         return self
 
@@ -154,7 +164,13 @@ class RemarkableNotebook:
 
     def push(self, *, include_tool: bool = False) -> RemarkableNotebook:
         self._stack.append(
-            (self._x, self._y, self._heading, self._pen_down, self._tool if include_tool else None)
+            (
+                self._x,
+                self._y,
+                self._heading,
+                self._pen_down,
+                self._tool if include_tool else None,
+            )
         )
         return self
 
@@ -198,7 +214,14 @@ class RemarkableNotebook:
         tool: Tool | None = None,
     ) -> RemarkableNotebook:
         pts: list[si.Point] = [
-            si.Point(x=float(x), y=float(y), speed=0, direction=0, width=(tool or self._tool).width, pressure=(tool or self._tool).pressure)
+            si.Point(
+                x=float(x),
+                y=float(y),
+                speed=0,
+                direction=0,
+                width=(tool or self._tool).width,
+                pressure=(tool or self._tool).pressure,
+            )
             for (x, y) in points
         ]
         if close and pts:
@@ -206,16 +229,42 @@ class RemarkableNotebook:
         self._lines.setdefault(self._current_layer, []).append((pts, tool))
         return self
 
-    def line(self, x1: float, y1: float, x2: float, y2: float, *, tool: Tool | None = None) -> RemarkableNotebook:
+    def line(
+        self, x1: float, y1: float, x2: float, y2: float, *, tool: Tool | None = None
+    ) -> RemarkableNotebook:
         return self.polyline([(x1, y1), (x2, y2)], tool=tool)
 
-    def rect(self, x: float, y: float, w: float, h: float, *, tool: Tool | None = None) -> RemarkableNotebook:
-        pts = rectangle_points(x, y, w, h, width=(tool or self._tool).width, pressure=(tool or self._tool).pressure)
+    def rect(
+        self, x: float, y: float, w: float, h: float, *, tool: Tool | None = None
+    ) -> RemarkableNotebook:
+        pts = rectangle_points(
+            x,
+            y,
+            w,
+            h,
+            width=(tool or self._tool).width,
+            pressure=(tool or self._tool).pressure,
+        )
         self._lines.setdefault(self._current_layer, []).append((pts, tool))
         return self
 
-    def circle(self, cx: float, cy: float, r: float, *, segments: int | None = None, tool: Tool | None = None) -> RemarkableNotebook:
-        pts = circle_points(cx, cy, r, segments=segments or 64, width=(tool or self._tool).width, pressure=(tool or self._tool).pressure)
+    def circle(
+        self,
+        cx: float,
+        cy: float,
+        r: float,
+        *,
+        segments: int | None = None,
+        tool: Tool | None = None,
+    ) -> RemarkableNotebook:
+        pts = circle_points(
+            cx,
+            cy,
+            r,
+            segments=segments or 64,
+            width=(tool or self._tool).width,
+            pressure=(tool or self._tool).pressure,
+        )
         self._lines.setdefault(self._current_layer, []).append((pts, tool))
         return self
 
@@ -233,7 +282,9 @@ class RemarkableNotebook:
     ) -> RemarkableNotebook:
         # Queue root text blocks for compile
         if not hasattr(self, "_root_texts"):
-            self._root_texts: list[tuple[float, float, float, si.ParagraphStyle, si.PenColor, str]] = []
+            self._root_texts: list[
+                tuple[float, float, float, si.ParagraphStyle, si.PenColor, str]
+            ] = []
         self._root_texts.append((float(x), float(y), float(width), style, color, text))
         return self
 
@@ -244,15 +295,20 @@ class RemarkableNotebook:
         *,
         color: si.PenColor = si.PenColor.YELLOW,
     ) -> RemarkableNotebook:
-        rects = [si.Rectangle(x=float(x), y=float(y), w=float(w), h=float(h)) for (x, y, w, h) in rectangles]
-        self._highlights.setdefault(self._current_layer, []).append((text, color, rects))
+        rects = [
+            si.Rectangle(x=float(x), y=float(y), w=float(w), h=float(h))
+            for (x, y, w, h) in rectangles
+        ]
+        self._highlights.setdefault(self._current_layer, []).append(
+            (text, color, rects)
+        )
         return self
 
     # --- Output ---
     def compile(self) -> list[Block]:
         # Materialize into the existing ReMarkableNotebook
         nb = ReMarkableNotebook()
-        layer_objs: dict[str, object] = {}
+        layer_objs: dict[str, NotebookLayer] = {}
         for name in self._lines.keys():
             layer_objs[name] = nb.create_layer(name)
         for name, lines in self._lines.items():
@@ -267,22 +323,30 @@ class RemarkableNotebook:
                     starting_length=0.0,
                 )
                 # add_line_to_layer will allocate CRDT IDs for us
-                nb.add_line_to_layer(layer, line.points, color=line.color, tool=line.tool, thickness_scale=line.thickness_scale)
+                nb.add_line_to_layer(
+                    layer,
+                    line.points,
+                    color=line.color,
+                    tool=line.tool,
+                    thickness_scale=line.thickness_scale,
+                )
         # Add highlights
         for name, items in self._highlights.items():
-            layer = layer_objs.get(name)
-            if layer is None:
-                layer = nb.create_layer(name)
+            existing = layer_objs.get(name)
+            layer = existing if existing is not None else nb.create_layer(name)
+            if existing is None:
                 layer_objs[name] = layer
             for text, color, rects in items:
-                nb.add_highlight_to_layer(layer, text=text, color=color, rectangles=rects)
+                nb.add_highlight_to_layer(
+                    layer, text=text, color=color, rectangles=rects
+                )
 
         blocks = nb.to_blocks()
 
         # Append root text blocks if any
-        for (x, y, width, style, color, text) in getattr(self, "_root_texts", []):
+        for x, y, width, style, _color, text in getattr(self, "_root_texts", []):
             # Build a minimal si.Text; style mapping is minimal PLAIN/selected style
-            text_items = CrdtSequence(
+            text_items: CrdtSequence = CrdtSequence(
                 [
                     CrdtSequenceItem(
                         item_id=CrdtId(1, 16),
@@ -294,7 +358,9 @@ class RemarkableNotebook:
                 ]
             )
             styles = {CrdtId(0, 0): LwwValue(timestamp=CrdtId(1, 15), value=style)}
-            text_value = si.Text(items=text_items, styles=styles, pos_x=x, pos_y=y, width=width)
+            text_value = si.Text(
+                items=text_items, styles=styles, pos_x=x, pos_y=y, width=width
+            )
             blocks.append(RootTextBlock(block_id=CrdtId(0, 0), value=text_value))
 
         return blocks
@@ -303,13 +369,13 @@ class RemarkableNotebook:
         pathlike: str | Path | None
         buf: BinaryIO | None = None
         if dest is None:
-            if isinstance(self._output, (str, Path)):
+            if isinstance(self._output, str | Path):
                 pathlike = self._output
             else:
                 buf = self._output  # may be None
                 pathlike = None
         else:
-            pathlike = dest if isinstance(dest, (str, Path)) else None
+            pathlike = dest if isinstance(dest, str | Path) else None
             buf = dest if hasattr(dest, "write") else None  # type: ignore[assignment]
 
         blocks = self.compile()

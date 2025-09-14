@@ -19,6 +19,7 @@ from rmscene.scene_stream import (
     PageInfoBlock,
     SceneGroupItemBlock,
     SceneLineItemBlock,
+    SceneGlyphItemBlock,
     SceneTreeBlock,
     TreeNodeBlock,
 )
@@ -120,7 +121,9 @@ class ReMarkableNotebook:
         if length is None:
             length = len(text)
         glyph_id = self.id_generator.next_id()
-        glyph = si.GlyphRange(start=start, length=length, text=text, color=color, rectangles=rectangles)
+        glyph = si.GlyphRange(
+            start=start, length=length, text=text, color=color, rectangles=rectangles
+        )
         layer.add_glyph(glyph, glyph_id)
         return glyph
 

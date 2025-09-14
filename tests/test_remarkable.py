@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+# ruff: noqa: I001
+
 from pathlib import Path
 
-from rmfiles import RemarkableNotebook
 from rmscene import scene_items as si
-from rmscene.scene_stream import SceneGlyphItemBlock, SceneLineItemBlock, RootTextBlock, read_blocks
+from rmscene.scene_stream import (
+    read_blocks,
+    RootTextBlock,
+    SceneGlyphItemBlock,
+    SceneLineItemBlock,
+)
 
 
 def test_turtle_square_and_text_and_highlight(tmp_path: Path) -> None:
+    from rmfiles import RemarkableNotebook
+
     out = tmp_path / "turtle.rm"
     nb = RemarkableNotebook(deg=True)
     nb.layer("Sketch").tool(pen=si.Pen.MARKER_1, color=si.PenColor.BLACK, width=3)
@@ -33,4 +41,3 @@ def test_turtle_square_and_text_and_highlight(tmp_path: Path) -> None:
                 has_glyph = True
 
     assert has_line and has_text and has_glyph
-

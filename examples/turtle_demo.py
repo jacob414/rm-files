@@ -3,12 +3,15 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from rmfiles import RemarkableNotebook
 from rmscene import scene_items as si
+
+from rmfiles import RemarkableNotebook
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Draw a simple scene with the turtle-like API")
+    p = argparse.ArgumentParser(
+        description="Draw a simple scene with the turtle-like API"
+    )
     p.add_argument("--out", default="output/turtle_demo.rm", help="Output .rm path")
     args = p.parse_args()
 
@@ -38,4 +41,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

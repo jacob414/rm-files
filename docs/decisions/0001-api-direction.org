@@ -19,4 +19,3 @@
 - Code is easier to test (events and compilation are deterministic).
 - API feels ergonomic for drawing workflows, yet remains explicit about tools and layers.
 - Backward compatibility is preserved: =ReMarkableNotebook= continues to work; =RemarkableNotebook= becomes the new recommended API.
-

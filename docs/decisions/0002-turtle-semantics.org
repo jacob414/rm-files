@@ -21,4 +21,3 @@
 ** Consequences
 - Users can build complex strokes incrementally and control continuity explicitly.
 - Push/pop enables L-system–style and recursive drawings.
-
