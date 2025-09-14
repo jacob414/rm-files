@@ -205,6 +205,43 @@ class RemarkableNotebook:
         return self
 
     # --- Path and primitives ---
+    def begin_path(self) -> RemarkableNotebook:
+        """Begin a new path at the current position.
+
+        Does not depend on pen state; explicitly seeds the path buffer with a
+        point at the current position using current tool width/pressure.
+        """
+        self._path.clear()
+        self._path.append(
+            si.Point(
+                x=self._x,
+                y=self._y,
+                speed=0,
+                direction=0,
+                width=self._tool.width,
+                pressure=self._tool.pressure,
+            )
+        )
+        return self
+
+    def close_path(self) -> RemarkableNotebook:
+        """Close the current path by repeating the first point, if present."""
+        if self._path:
+            first = self._path[0]
+            last = self._path[-1]
+            if first.x != last.x or first.y != last.y:
+                self._path.append(
+                    si.Point(
+                        x=first.x,
+                        y=first.y,
+                        speed=0,
+                        direction=0,
+                        width=self._tool.width,
+                        pressure=self._tool.pressure,
+                    )
+                )
+        return self
+
     def line_to(self, x: float, y: float) -> RemarkableNotebook:
         self._x, self._y = float(x), float(y)
         if self._pen_down:
@@ -218,6 +255,79 @@ class RemarkableNotebook:
                     pressure=self._tool.pressure,
                 )
             )
+        return self
+
+    def quad_to(
+        self, x1: float, y1: float, x2: float, y2: float, *, samples: int = 16
+    ) -> RemarkableNotebook:
+        """Append a quadratic Bezier segment to the current path.
+
+        Uses the last point in the path as P0, (x1,y1) as control P1, and
+        (x2,y2) as end P2. If the path is empty, it begins at current position.
+        """
+        if not self._path:
+            self.begin_path()
+        p0 = self._path[-1]
+        w = self._tool.width
+        p = self._tool.pressure
+        s = max(1, int(samples))
+        for i in range(1, s + 1):
+            t = i / s
+            mt = 1 - t
+            x = mt * mt * p0.x + 2 * mt * t * x1 + t * t * x2
+            y = mt * mt * p0.y + 2 * mt * t * y1 + t * t * y2
+            self._path.append(
+                si.Point(
+                    x=float(x), y=float(y), speed=0, direction=0, width=w, pressure=p
+                )
+            )
+        self._x, self._y = float(x2), float(y2)
+        return self
+
+    def cubic_to(
+        self,
+        x1: float,
+        y1: float,
+        x2: float,
+        y2: float,
+        x3: float,
+        y3: float,
+        *,
+        samples: int = 24,
+    ) -> RemarkableNotebook:
+        """Append a cubic Bezier segment to the current path.
+
+        Uses the last point in the path as P0, (x1,y1) and (x2,y2) as control
+        points, and (x3,y3) as end. If the path is empty, it begins at current
+        position.
+        """
+        if not self._path:
+            self.begin_path()
+        p0 = self._path[-1]
+        w = self._tool.width
+        p = self._tool.pressure
+        s = max(1, int(samples))
+        for i in range(1, s + 1):
+            t = i / s
+            mt = 1 - t
+            x = (
+                mt * mt * mt * p0.x
+                + 3 * mt * mt * t * x1
+                + 3 * mt * t * t * x2
+                + t * t * t * x3
+            )
+            y = (
+                mt * mt * mt * p0.y
+                + 3 * mt * mt * t * y1
+                + 3 * mt * t * t * y2
+                + t * t * t * y3
+            )
+            self._path.append(
+                si.Point(
+                    x=float(x), y=float(y), speed=0, direction=0, width=w, pressure=p
+                )
+            )
+        self._x, self._y = float(x3), float(y3)
         return self
 
     def stroke(self, *, tool: Tool | None = None) -> RemarkableNotebook:
