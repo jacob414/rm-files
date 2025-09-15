@@ -216,3 +216,9 @@ The example script =./examples/primitives_demo.py= didn't produce a
 could have broken the more low-level funtionallity that existed
 before. Do a comprehensive and as thorough investigation as you can
 and try to come up with what have gone wrong.
+
+** 2025-09-15 17:52
+
+Create a small script that re-generates all fixtures that the new
+shape regression tests need. Create a make target that regenerates
+them using the script.
