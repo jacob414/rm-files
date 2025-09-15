@@ -166,6 +166,7 @@ doc/scratch.txt
 # Project-specific ignores
 output/
 *.rm
+!fixtures/*.rm
 
 # Claude Code
 .claude/

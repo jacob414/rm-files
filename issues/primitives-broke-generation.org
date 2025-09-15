@@ -93,3 +93,86 @@ Better, but now the uploaded notebook is just one completely empty
 page. Investigate further, go as deeply as you can and think as deep
 as you can about it. If nothing new comes up, make a plan how we can
 investigate this together step by step.
+
+* Codex
+
+I dug deeper and found a structural mismatch that likely explains the
+“empty page” on-device, plus I’ve laid out a step-by-step path we can
+use to confirm.
+
+** What I discovered
+
+- =SceneTreeBlock.node_id= mismatch:
+    - Our low-level, “known-good” generator (=rmfiles/generate.py=)
+      uses =SceneTreeBlock(tree_id=layer_id, node_id=CrdtId(0, 0),
+      parent_id=root_id)=.
+    - Our higher-level builder (=rmfiles/notebook.py=) used instead of
+      =CrdtId(0, 0)=.
+    - Our read/write code and tests didn’t care about =node_id=, so
+      tests passed, but the device likely expects =node_id= to be =0=
+      for =SceneTreeBlock= tree mappings.
+
+      That mismatch can manifest as a blank page despite valid blocks.
+- Header/meta block order:
+    - Devices generally expect meta/header (=AuthorIdsBlock=,
+      =MigrationInfoBlock=, =PageInfoBlock=) first. Our =compile()=
+      now reorders these to the front for files produced by
+      =RemarkableNotebook=.
+    - Tests requiring a specific internal order weren’t broken; the
+      reorder happens only in the write path.
+- Effective tool capture:
+    - I now store the effective Tool (preset or current) at stroke
+      time, not compile time. This fixed preset-related correctness,
+      but wasn’t the root cause for blank pages.
+
+** 2025-09-15 15:37
+
+Very good! Now the =./examples/primitives_demo.py= works. If anything needs to be committed, do that & push.
+
+Then we'll create regression tests so future primitives continue to
+work.
+
+Use =./examples/primitives_demo.py= to create regression tests. For
+every primitive that's generated in =./examples/primitives_demo.py=,
+generate one =.rm= file in a new directory =./fixtures/= in the
+repo. Then take the code that generated the =.rm= file and use it as
+test code, along the lines of:
+
+From =./examples/primitives_demo.py=:
+#+BEGIN_SRC python
+  # [....]
+  # Regular polygon and star
+  nb.regular_polygon(6, cx=150, cy=120, r=60)
+  nb.star(cx=330, cy=120, r=60, points=5, inner_ratio=0.45)
+  # [...]
+#+END_SRC
+Becomes a fixture like this:
+#+BEGIN_SRC python
+      nb = <...>
+      nb.regular_polygon(6, cx=150, cy=120, r=60)
+      nb.write("fixtures/polygon_fixture.rm") # or
+#+END_SRC
+
+Becomes a test like this:
+#+BEGIN_SRC python
+  # Primitive regression test module .....
+
+  def test_polygon(<...>):
+      nb = <...>
+      nb.regular_polygon(6, cx=150, cy=120, r=60)
+      nb.write(<...>) # A temporary file
+      binary_polygon = open("<...>") # Reads in binary data from temporary file
+      assert open("fixtures/polygon_fixture.rm").read() == open(<polygon fixture>).read()
+
+   # Further primitive regression test goes here...
+#+END_SRC
+
+There might be a better way to do the =assert= statement above,
+possibly by using file content hashes or the like.
+
+But create one fixture =.rm= file for every segment of =./examples/primitives_demo.py= no matter what.
+
+Do you need clarifications? Then ask me. If you think this is clear
+enough, begin implementing primitive regression tests. Implement one
+primitive per commit. Start with the first, =regular_polygon= so we
+can check if this method works.
