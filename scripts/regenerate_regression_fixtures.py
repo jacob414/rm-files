@@ -17,35 +17,39 @@ def regen_fixtures(fixtures_dir: Path, *, verbose: bool = False) -> None:
         if verbose:
             print(f"Wrote {out}")
 
-    # 1) Regular polygon (explicit tool)
+    # 1) Regular polygon (explicit tool, width 24)
     nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch").tool(pen=si.Pen.MARKER_1, color=si.PenColor.BLACK, width=12)
+    nb.layer("Sketch").tool(pen=si.Pen.MARKER_1, color=si.PenColor.BLACK, width=24)
     nb.regular_polygon(6, cx=150, cy=120, r=60)
     write(nb, "polygon_fixture.rm")
 
-    # 2) Rounded rectangle (default tool)
+    # 2) Rounded rectangle (ballpoint tool, width 24)
     nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch").rounded_rect(60, 320, 180, 110, radius=18, segments=6)
+    nb.layer("Sketch").tool(pen=si.Pen.BALLPOINT_1, color=si.PenColor.BLACK, width=24)
+    nb.rounded_rect(60, 320, 180, 110, radius=18, segments=6)
     write(nb, "rounded_rect_fixture.rm")
 
-    # 3) Star (default tool)
+    # 3) Star (ballpoint tool, width 24)
     nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch").star(cx=330, cy=120, r=60, points=5, inner_ratio=0.45)
+    nb.layer("Sketch").tool(pen=si.Pen.BALLPOINT_1, color=si.PenColor.BLACK, width=24)
+    nb.star(cx=330, cy=120, r=60, points=5, inner_ratio=0.45)
     write(nb, "star_fixture.rm")
 
-    # 4) Ellipse (default tool)
+    # 4) Ellipse (ballpoint tool, width 24)
     nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch").ellipse(cx=150, cy=260, rx=80, ry=40, rotation=20)
+    nb.layer("Sketch").tool(pen=si.Pen.BALLPOINT_1, color=si.PenColor.BLACK, width=24)
+    nb.ellipse(cx=150, cy=260, rx=80, ry=40, rotation=20)
     write(nb, "ellipse_fixture.rm")
 
-    # 5) Arc (default tool)
+    # 5) Arc (ballpoint tool, width 24)
     nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch").arc(cx=330, cy=260, r=70, start=45, sweep=220)
+    nb.layer("Sketch").tool(pen=si.Pen.BALLPOINT_1, color=si.PenColor.BLACK, width=24)
+    nb.arc(cx=330, cy=260, r=70, start=45, sweep=220)
     write(nb, "arc_fixture.rm")
 
-    # 6) Path with quadratic and cubic (default tool)
+    # 6) Path with quadratic and cubic (ballpoint tool, width 24)
     nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch")
+    nb.layer("Sketch").tool(pen=si.Pen.BALLPOINT_1, color=si.PenColor.BLACK, width=24)
     nb.move_to(280, 320)
     nb.begin_path().quad_to(360, 320, 360, 380, samples=12).cubic_to(
         360, 430, 300, 430, 280, 390, samples=18

@@ -222,3 +222,8 @@ and try to come up with what have gone wrong.
 Create a small script that re-generates all fixtures that the new
 shape regression tests need. Create a make target that regenerates
 them using the script.
+
+** 2025-09-15 17:57
+
+Change the fixture generation so that the stroke of the line widths
+are 24 instead of 12.
