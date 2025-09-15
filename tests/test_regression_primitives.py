@@ -46,6 +46,21 @@ def test_regression_regular_polygon(tmp_path: Path) -> None:
     assert lines_new == lines_fixture
 
 
+def test_regression_rounded_rect(tmp_path: Path) -> None:
+    fixture = Path("fixtures/rounded_rect_fixture.rm")
+    assert fixture.exists(), "Expected rounded rect fixture to exist"
+
+    out = tmp_path / "rounded.regression.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").rounded_rect(60, 320, 180, 110, radius=18, segments=6)
+    nb.write(out)
+
+    lines_new = _canonical_lines(out)
+    lines_fixture = _canonical_lines(fixture)
+
+    assert lines_new == lines_fixture
+
+
 def test_regression_star(tmp_path: Path) -> None:
     fixture = Path("fixtures/star_fixture.rm")
     assert fixture.exists(), "Expected star fixture to exist"
