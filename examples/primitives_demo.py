@@ -18,8 +18,10 @@ def main() -> int:
 
     nb = RemarkableNotebook(deg=True)
 
-    # Base layer
-    nb.layer("Sketch").use_preset("ballpoint")
+    # Base layer: draw shapes with a consistent, visible width
+    from rmscene import scene_items as si
+
+    nb.layer("Sketch").tool(pen=si.Pen.BALLPOINT_1, color=si.PenColor.BLACK, width=24)
 
     # Regular polygon and star
     nb.regular_polygon(6, cx=150, cy=120, r=60)
@@ -38,8 +40,9 @@ def main() -> int:
         360, 430, 300, 430, 280, 390, samples=18
     ).stroke()
 
-    # Transform demo: draw rotated/scaled star copies using preset highlighter
+    # Transform demo: draw rotated/scaled star copies using highlighter at width 24
     with nb.preset_scope("highlighter"):
+        nb.tool(pen=si.Pen.HIGHLIGHTER_1, color=si.PenColor.YELLOW, width=24)
         nb.tf_push().tf_translate(480, 180)
         for _i in range(5):
             nb.tf_rotate(18).tf_scale(0.9, 0.9)

@@ -18,7 +18,8 @@ from rmfiles import RemarkableNotebook
 from rmscene import scene_items as si
 
 nb = RemarkableNotebook(deg=True)
-nb.layer("Sketch").use_preset("marker")
+# Use a clear, consistent stroke width for examples
+nb.layer("Sketch").tool(pen=si.Pen.MARKER_1, color=si.PenColor.BLACK, width=24)
 nb.circle(200, 200, 80)
 nb.text(120, 120, "Hello, reMarkable!", width=400, style=si.ParagraphStyle.HEADING)
 nb.write("output/minimal.rm")

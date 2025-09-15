@@ -40,6 +40,7 @@ Guidelines:
 
 - Do not update fixtures to paper over bugs; fix the code instead.
 - Keep the scene tool and color consistent across fixture and test (tests usually rely on defaults or explicitly set a preset/tool for determinism).
+- This project standardizes on a stroke width of 24 for regression fixtures to keep shapes visually clear and to avoid ambiguity. The regeneration script and example code use `width=24` accordingly.
 
 ## Regenerating all fixtures
 
