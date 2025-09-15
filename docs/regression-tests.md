@@ -52,6 +52,16 @@ make fixtures-rebuild
 
 This runs `scripts/regenerate_regression_fixtures.py` and writes the golden `.rm` files into `fixtures/`.
 
+Standard sample constants
+
+- Import `rmfiles.testing` when generating sample `.rm` content to ensure consistent, deterministic fixtures and examples:
+
+```python
+from rmfiles.testing import SAMPLE_LINE_WIDTH, SAMPLE_TOOL
+```
+
+- These are used by tests, examples, and the fixture regeneration script.
+
 ## Adding a new regression test
 
 1) Create a fixture: generate the `.rm` you expect via the public API and save it under `fixtures/<name>_fixture.rm`.

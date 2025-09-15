@@ -227,3 +227,16 @@ them using the script.
 
 Change the fixture generation so that the stroke of the line widths
 are 24 instead of 12.
+
+** 2025-09-15 18:07
+
+Create a new module =rmscene.testing=. It should contain:
+
+- A constant SAMPLE_LINE_WIDTH for line width to use in fixture files. It should
+  be 24. All tests or sample scripts that generates .rm -files should
+  import =rmfiles.testing=
+- Another constant SAMPLE_TOOL for which drawing tool fixture files or
+  sample script should use for lines. Make it use the "Fineliner" tool
+- Move the =test_regression_primitives= to the new =rmfiles.testing= module.
+
+When done, re-generate the fixture files.

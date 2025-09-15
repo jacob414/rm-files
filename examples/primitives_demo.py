@@ -21,7 +21,11 @@ def main() -> int:
     # Base layer: draw shapes with a consistent, visible width
     from rmscene import scene_items as si
 
-    nb.layer("Sketch").tool(pen=si.Pen.BALLPOINT_1, color=si.PenColor.BLACK, width=24)
+    from rmfiles.testing import SAMPLE_LINE_WIDTH, SAMPLE_TOOL
+
+    nb.layer("Sketch").tool(
+        pen=SAMPLE_TOOL, color=si.PenColor.BLACK, width=SAMPLE_LINE_WIDTH
+    )
 
     # Regular polygon and star
     nb.regular_polygon(6, cx=150, cy=120, r=60)
@@ -42,7 +46,11 @@ def main() -> int:
 
     # Transform demo: draw rotated/scaled star copies using highlighter at width 24
     with nb.preset_scope("highlighter"):
-        nb.tool(pen=si.Pen.HIGHLIGHTER_1, color=si.PenColor.YELLOW, width=24)
+        nb.tool(
+            pen=si.Pen.HIGHLIGHTER_1,
+            color=si.PenColor.YELLOW,
+            width=SAMPLE_LINE_WIDTH,
+        )
         nb.tf_push().tf_translate(480, 180)
         for _i in range(5):
             nb.tf_rotate(18).tf_scale(0.9, 0.9)

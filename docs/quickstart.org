@@ -16,10 +16,11 @@ make install-dev
 #+BEGIN_SRC python
 from rmfiles import RemarkableNotebook
 from rmscene import scene_items as si
+from rmfiles.testing import SAMPLE_LINE_WIDTH, SAMPLE_TOOL
 
 nb = RemarkableNotebook(deg=True)
 # Use a clear, consistent stroke width for examples
-nb.layer("Sketch").tool(pen=si.Pen.MARKER_1, color=si.PenColor.BLACK, width=24)
+nb.layer("Sketch").tool(pen=SAMPLE_TOOL, color=si.PenColor.BLACK, width=SAMPLE_LINE_WIDTH)
 nb.circle(200, 200, 80)
 nb.text(120, 120, "Hello, reMarkable!", width=400, style=si.ParagraphStyle.HEADING)
 nb.write("output/minimal.rm")
