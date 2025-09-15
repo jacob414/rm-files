@@ -176,3 +176,10 @@ Do you need clarifications? Then ask me. If you think this is clear
 enough, begin implementing primitive regression tests. Implement one
 primitive per commit. Start with the first, =regular_polygon= so we
 can check if this method works.
+
+** 2025-09-15 16:04
+
+Promising! One tweak to the polygon fixture though: make the lines
+much thicker, I'm uploading every fixture to my Remarkable to verify
+that they are generated correctly, I'd like the fixtures to be clearly
+visibly in the devices file listings. Do that as one separate commit.

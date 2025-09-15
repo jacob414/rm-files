@@ -33,8 +33,11 @@ def test_regression_regular_polygon(tmp_path: Path) -> None:
     assert fixture.exists(), "Expected polygon fixture to exist"
 
     out = tmp_path / "poly.regression.rm"
+    from rmscene import scene_items as si
+
     nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch").regular_polygon(6, cx=150, cy=120, r=60)
+    nb.layer("Sketch").tool(pen=si.Pen.MARKER_1, color=si.PenColor.BLACK, width=12)
+    nb.regular_polygon(6, cx=150, cy=120, r=60)
     nb.write(out)
 
     lines_new = _canonical_lines(out)
