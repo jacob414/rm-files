@@ -17,29 +17,32 @@ Illustrative CLI session
 
 This is a transcript from my CLI that provides clues about the `.rmdoc` format:
 
-... code-block:: shell
-tmp $ unzip Sample.rmdoc
-Archive:  Sample.rmdoc
- extracting: 62477a1b-de36-4b37-a9cb-d57e595b51e1.content
- extracting: 62477a1b-de36-4b37-a9cb-d57e595b51e1.metadata
- extracting: 62477a1b-de36-4b37-a9cb-d57e595b51e1/5a1aa9a2-b72a-4a0e-9bab-44b179bdd1fa.rm
-(.venv) zipfly:~/src/oss/rm-files/sample-files/tmp main
-tmp $ tree
-.
-├── 62477a1b-de36-4b37-a9cb-d57e595b51e1
-│   └── 5a1aa9a2-b72a-4a0e-9bab-44b179bdd1fa.rm
-├── 62477a1b-de36-4b37-a9cb-d57e595b51e1.content
-├── 62477a1b-de36-4b37-a9cb-d57e595b51e1.metadata
-└── Sample.rmdoc
+.. code-block:: shell
 
-2 directories, 4 files
-(.venv) zipfly:~/src/oss/rm-files/sample-files/tmp main
-tmp $ file 62477a1b-de36-4b37-a9cb-d57e595b51e1/5a1aa9a2-b72a-4a0e-9bab-44b179bdd1fa.rm
-62477a1b-de36-4b37-a9cb-d57e595b51e1/5a1aa9a2-b72a-4a0e-9bab-44b179bdd1fa.rm: reMarkable tablet page (v6), 1404 x 1872, 25 layer(s)
+    tmp $ unzip Sample.rmdoc
+    Archive:  Sample.rmdoc
+     extracting: 62477a1b-de36-4b37-a9cb-d57e595b51e1.content
+     extracting: 62477a1b-de36-4b37-a9cb-d57e595b51e1.metadata
+     extracting: 62477a1b-de36-4b37-a9cb-d57e595b51e1/5a1aa9a2-b72a-4a0e-9bab-44b179bdd1fa.rm
+    (.venv) zipfly:~/src/oss/rm-files/sample-files/tmp main
+    tmp $ tree
+    .
+    ├── 62477a1b-de36-4b37-a9cb-d57e595b51e1
+    │   └── 5a1aa9a2-b72a-4a0e-9bab-44b179bdd1fa.rm
+    ├── 62477a1b-de36-4b37-a9cb-d57e595b51e1.content
+    ├── 62477a1b-de36-4b37-a9cb-d57e595b51e1.metadata
+    └── Sample.rmdoc
 
-tmp $ cat 62477a1b-de36-4b37-a9cb-d57e595b51e1.content
-... code-block:: javascript
-{
+    2 directories, 4 files
+    (.venv) zipfly:~/src/oss/rm-files/sample-files/tmp main
+    tmp $ file 62477a1b-de36-4b37-a9cb-d57e595b51e1/5a1aa9a2-b72a-4a0e-9bab-44b179bdd1fa.rm
+    62477a1b-de36-4b37-a9cb-d57e595b51e1/5a1aa9a2-b72a-4a0e-9bab-44b179bdd1fa.rm: reMarkable tablet page (v6), 1404 x 1872, 25 layer(s)
+
+    tmp $ cat 62477a1b-de36-4b37-a9cb-d57e595b51e1.content
+
+.. code-block:: json
+
+    {
     "cPages": {
         "lastOpened": {
             "timestamp": "1:1",
@@ -145,12 +148,12 @@ tmp $ cat 62477a1b-de36-4b37-a9cb-d57e595b51e1.content
     "textAlignment": "justify",
     "textScale": 1,
     "zoomMode": "bestFit"
-}
+    }
 
 Decision
 --------
 
-This information given in the CLI transcript of the last sectionshould
+This information given in the CLI transcript of the last section should
 provide what's needed to support the `.rmdoc` format.
 
 Consequences

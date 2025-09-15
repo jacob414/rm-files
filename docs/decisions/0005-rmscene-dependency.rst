@@ -39,19 +39,25 @@ Trade-offs
 Guidance For Development
 ------------------------
 - Installation
+
   - Editable install: ``pip install -e .`` (installs ``rmscene`` from GitHub).
   - Network-restricted environments: pre-install ``rmscene`` from a wheel or
     pin a specific commit/tag in ``setup.py``/``requirements.txt`` as needed.
 
 - Usage patterns
+
   - Write
+
     - Build blocks from our in-memory notebook and call
       ``rmscene.write_blocks(binary_io, blocks)``.
+
   - Read
+
     - Use ``rmscene.read_blocks(binary_io)`` to iterate blocks, or
       higher-level tree helpers if needed.
 
 - Testing
+
   - Prefer golden tests using known-good ``.rm`` fixtures.
   - For generation tests, verify file presence, header bytes (``reMarkable``
     string), and basic structure via ``rmscene.read_blocks`` when available.
