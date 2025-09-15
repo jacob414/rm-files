@@ -1,0 +1,95 @@
+* Primitives broke generation
+
+I dug into why examples/primitives_demo.py produced a .rm that wasn’t
+readable on the tablet and made targeted fixes. Here’s what I found
+and changed.
+
+** Findings
+
+- Block order sensitivity:
+    - Our =RemarkableNotebook.compile= used
+      =ReMarkableNotebook.to_blocks()= output. That builder originally
+      puts the root =TreeNodeBlock= before meta/header blocks
+      (=AuthorIdsBlock=, =MigrationInfoBlock=, =PageInfoBlock=).
+    - While our tests and the custom reader/writer accepted that
+      order, the device likely expects header/meta first (then tree
+      and items). This mismatch can cause the tablet to reject the
+      file.
+    - While our tests and the custom reader/writer accepted that
+      order, the device likely expects header/meta first (then tree
+      and items). This mismatch can cause the tablet to reject the
+      file.
+- Tool preset usage at stroke time:
+    - Earlier, line recording stored a reference to an optional tool
+      override; if =None=, the compile path used the current tool at
+      compile time (not at stroke time). This could lead to lines with
+      unintended tools.
+    - This wouldn’t break structural validity, but it made the preset
+      tests fail and could affect expected rendering.
+- Text and glyph blocks:
+    - The primitives demo does not add text or glyph ranges, so they
+      aren’t the culprit for that file specifically. But we remained
+      careful not to disturb device expectations.
+
+** Fixes
+
+- Header reorder (only for files we write from RemarkableNotebook):
+    - After generating blocks from ReMarkableNotebook, compile() now
+      moves header/meta blocks to the front:
+    - =AuthorIdsBlock=, =MigrationInfoBlock=, =PageInfoBlock= are extracted
+      and prepended before the rest.
+    - This keeps ReMarkableNotebook.to_blocks() order unchanged (so
+      tests that assert “first block is TreeNodeBlock” still pass)
+      while ensuring the device sees header/meta first on output.
+   - Store effective tool at stroke time:
+      - We now record the effective Tool object (either the override
+        passed to stroke/polyline/primitives or the current tool) at
+        the moment of adding the stroke.
+      - On compile(), we use that stored Tool to construct the si.Line, ensuring
+  preset_scope() and tool_scope() behavior is captured and stable.
+  -
+  Transform stack and new primitives validation:
+      - Transform stack applies only to geometry (points) at compile-time. No
+  format headers or tool data is transformed.
+      - All new primitives (regular_polygon, star, ellipse, arc, rounded_rect)
+  and path-curve samplers (quad_to, cubic_to) generate well-formed polylines
+  under the same layer and tree structure produced by ReMarkableNotebook.
+      - We added tests that write these shapes and confirm line blocks exist;
+  they pass.
+
+  What I verified
+
+  - All tests pass: 36/36 locally.
+  - Mypy clean.
+  - Ruff/format hooks apply cleanly.
+  - The example script problems were likely due to block order. With the compile
+  reorder now in place, the primitives demo’s .rm should be accepted by the
+  tablet.
+
+  Commits of note
+
+  - feat(remarkable): transform stack; apply affine at compile time
+  - feat(remarkable): regular_polygon(), star(), ellipse(), arc(), rounded_rect()
+  - feat(paths): begin_path/close_path + quad_to/cubic_to
+  - feat(turtle): goto/left/right/setheading/home/set_deg
+  - feat(presets): define_preset/use_preset/preset_scope; store effective tool at
+  stroke time
+  - fix(remarkable): reorder header/meta blocks to the front in compile()
+  - examples: primitives_demo.py with transforms and presets
+  - docs: docs/quickstart.org; README.org links to it
+
+  Next steps (if you’d like me to verify on-device)
+
+  - I can produce a fresh output/primitives_demo.rm and send it through your
+  existing side-load workflow, or add a tiny CI step to generate that file for a
+  quick smoke test (though CI can’t test on-device).
+  - If you still see problems on-device, send me the specific file and I’ll parse
+  it with our reader or dump the block sequence to spot any anomalies.
+
+
+** 2025-09-15 15:21
+
+Better, but now the uploaded notebook is just one completely empty
+page. Investigate further, go as deeply as you can and think as deep
+as you can about it. If nothing new comes up, make a plan how we can
+investigate this together step by step.

@@ -195,7 +195,7 @@ class ReMarkableNotebook:
             blocks.append(
                 SceneTreeBlock(
                     tree_id=layer.layer_id,
-                    node_id=layer.layer_id,
+                    node_id=CrdtId(0, 0),
                     is_update=True,
                     parent_id=self.root_id,
                 )

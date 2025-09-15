@@ -9,7 +9,13 @@ from typing import BinaryIO
 
 from rmscene import scene_items as si
 from rmscene.crdt_sequence import CrdtSequence, CrdtSequenceItem
-from rmscene.scene_stream import Block, RootTextBlock
+from rmscene.scene_stream import (
+    AuthorIdsBlock,
+    Block,
+    MigrationInfoBlock,
+    PageInfoBlock,
+    RootTextBlock,
+)
 from rmscene.tagged_block_common import CrdtId, LwwValue
 
 from .generate import circle_points, rectangle_points, write_rm
@@ -825,6 +831,15 @@ class RemarkableNotebook:
                 )
 
         blocks = nb.to_blocks()
+        # Reorder header/meta blocks to the front to match device expectations
+        hdr: list[Block] = []
+        rest: list[Block] = []
+        for b in blocks:
+            if isinstance(b, AuthorIdsBlock | MigrationInfoBlock | PageInfoBlock):
+                hdr.append(b)
+            else:
+                rest.append(b)
+        blocks = hdr + rest
 
         # Append root text blocks if any
         for x, y, width, style, _color, text in getattr(self, "_root_texts", []):

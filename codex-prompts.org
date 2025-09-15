@@ -208,3 +208,11 @@ Sounds promising. Start implementing.
 ** 2025-09-15 14:33
 
 Add the link from README.org to docs/quickstart.org.
+
+** 2025-09-15 14:47
+
+The example script =./examples/primitives_demo.py= didn't produce a
+=.rm= file that was readable by the tablet. Some of the new primitives
+could have broken the more low-level funtionallity that existed
+before. Do a comprehensive and as thorough investigation as you can
+and try to come up with what have gone wrong.
