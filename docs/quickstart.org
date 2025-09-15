@@ -1,0 +1,68 @@
+* rmfiles Quickstart
+
+This quickstart shows how to use the high-level =RemarkableNotebook= API to draw shapes, use presets, and write a =.rm= file.
+
+** Install
+
+Assuming you have a venv set up (see the =Makefile= targets):
+
+#+BEGIN_SRC sh
+make venv
+make install-dev
+#+END_SRC
+
+** Minimal example
+
+#+BEGIN_SRC python
+from rmfiles import RemarkableNotebook
+from rmscene import scene_items as si
+
+nb = RemarkableNotebook(deg=True)
+nb.layer("Sketch").use_preset("marker")
+nb.circle(200, 200, 80)
+nb.text(120, 120, "Hello, reMarkable!", width=400, style=si.ParagraphStyle.HEADING)
+nb.write("output/minimal.rm")
+#+END_SRC
+
+** Primitives and transforms
+
+- Regular polygon: =regular_polygon(n, cx, cy, r, rotation=…)=
+- Star: =star(cx, cy, r, points=…, inner_ratio=…, rotation=…)=
+- Ellipse: =ellipse(cx, cy, rx, ry, segments=…, rotation=…)=
+- Arc: =arc(cx, cy, r, start, sweep, segments=…)=
+- Rounded rectangle: =rounded_rect(x, y, w, h, radius=…, segments=…)=
+
+Transforms (apply to geometry only):
+
+- =tf_translate(dx, dy)=
+- =tf_rotate(angle)= (degrees when =deg=True=)
+- =tf_scale(sx, sy)=
+- =tf_push()= and =tf_pop()= to bracket state
+
+** Paths and curves
+
+- =begin_path()= starts a path from the current position
+- =line_to(x, y)= appends a segment
+- =quad_to(cx, cy, x, y, samples=…)= adds a quadratic Bezier
+- =cubic_to(x1, y1, x2, y2, x3, y3, samples=…)= adds a cubic Bezier
+- =close_path()= closes the path; =stroke()= records it
+
+** Turtle ergonomics
+
+- =goto(x, y)=, =left(a)=, =right(a)=, =setheading(a)=, =home()=, =set_deg(True|False)=
+
+** Tool presets
+
+- Use built-ins: =use_preset("marker")=, =use_preset("highlighter")=, etc.
+- Define your own: =define_preset("bold", pen=si.Pen.MARKER_1, width=8)=
+- Scope a preset: =with nb.preset_scope("highlighter"): …=
+
+** Run the demo
+
+Run:
+
+#+BEGIN_SRC sh
+python examples/primitives_demo.py --out output/primitives_demo.rm
+#+END_SRC
+
+Open the resulting file on your tablet or viewer that understands reMarkable =.rm=.
