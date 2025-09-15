@@ -74,3 +74,18 @@ def test_regression_ellipse(tmp_path: Path) -> None:
     lines_fixture = _canonical_lines(fixture)
 
     assert lines_new == lines_fixture
+
+
+def test_regression_arc(tmp_path: Path) -> None:
+    fixture = Path("fixtures/arc_fixture.rm")
+    assert fixture.exists(), "Expected arc fixture to exist"
+
+    out = tmp_path / "arc.regression.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").arc(cx=330, cy=260, r=70, start=45, sweep=220)
+    nb.write(out)
+
+    lines_new = _canonical_lines(out)
+    lines_fixture = _canonical_lines(fixture)
+
+    assert lines_new == lines_fixture

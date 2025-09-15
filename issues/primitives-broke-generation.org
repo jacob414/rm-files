@@ -187,3 +187,7 @@ visibly in the devices file listings. Do that as one separate commit.
 ** 2025-09-15 16:15
 
 Good. Proceed to the star.
+
+** 2025-09-15 16:26
+
+Good. Go through all remaining ones, but do one commit per shape.
