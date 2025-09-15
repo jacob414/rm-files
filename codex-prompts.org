@@ -240,3 +240,15 @@ Create a new module =rmscene.testing=. It should contain:
 - Move the =test_regression_primitives= to the new =rmfiles.testing= module.
 
 When done, re-generate the fixture files.
+
+** 2025-09-15 18:31
+
+Also document that any test helper function that can be generalized
+should go in =rmfiles.testing=.
+
+** 2025-09-15 18:33
+
+=docs/quickstart.org= and =docs/regression-tests.md= isn't linked in
+the documentation that is being generated via GitHub pages. See to that
+they are. Check that Sphinx supports org-mode since =quickstart.org=
+is written in that. If not, reformat it into something Sphinx supports.

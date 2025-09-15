@@ -33,3 +33,11 @@ Implementation Notes
   - ``install-dev``: install QA deps.
   - ``check-deps``: import-checks for key modules (``rmscene``, ``numpy``) before running tests.
   - ``test``/``test-quick``: depend on ``check-deps`` so failures surface early.
+
+Testing Utilities
+-----------------
+
+- Centralize generalized test helpers in ``rmfiles.testing`` (e.g., canonical line diffing,
+  common sample settings like ``SAMPLE_LINE_WIDTH`` and ``SAMPLE_TOOL``).
+- Tests, examples, and fixture regeneration scripts should import from ``rmfiles.testing``
+  to ensure consistency and avoid duplication.
