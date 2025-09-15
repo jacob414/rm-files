@@ -204,3 +204,7 @@ text/highlight support and the small example script.
 ** 2025-09-14 21:44
 
 Sounds promising. Start implementing.
+
+** 2025-09-15 14:33
+
+Add the link from README.org to docs/quickstart.org.

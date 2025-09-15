@@ -87,3 +87,9 @@ width than the default.
 
 Note: writing relies on the =rmscene= package (installed via =setup.py=). If it's
 not available, =rmfiles new= will fail with a clear message.
+
+** Quickstart and Demo
+
+- See the org-mode quickstart: [[file:docs/quickstart.org][docs/quickstart.org]]
+- Run the primitives + transforms demo:
+  - =python examples/primitives_demo.py --out output/primitives_demo.rm=
