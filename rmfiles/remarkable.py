@@ -85,6 +85,45 @@ class RemarkableNotebook:
         )
         self._affine_stack: list[tuple[float, float, float, float, float, float]] = []
 
+        # Tool presets
+        self._presets: dict[str, Tool] = {
+            "ballpoint": Tool(
+                pen=si.Pen.BALLPOINT_1,
+                color=si.PenColor.BLACK,
+                width=2,
+                pressure=100,
+                thickness_scale=1.0,
+            ),
+            "fineliner": Tool(
+                pen=si.Pen.FINELINER_1,
+                color=si.PenColor.BLACK,
+                width=2,
+                pressure=100,
+                thickness_scale=1.0,
+            ),
+            "marker": Tool(
+                pen=si.Pen.MARKER_1,
+                color=si.PenColor.BLACK,
+                width=4,
+                pressure=120,
+                thickness_scale=2.0,
+            ),
+            "pencil": Tool(
+                pen=si.Pen.PENCIL_1,
+                color=si.PenColor.BLACK,
+                width=2,
+                pressure=100,
+                thickness_scale=1.0,
+            ),
+            "highlighter": Tool(
+                pen=si.Pen.HIGHLIGHTER_1,
+                color=si.PenColor.YELLOW,
+                width=12,
+                pressure=100,
+                thickness_scale=2.0,
+            ),
+        }
+
     # --- Layer management ---
     def layer(self, name: str, *, visible: bool = True) -> RemarkableNotebook:
         # visible is currently unused; reserved for future compile mapping
@@ -115,6 +154,48 @@ class RemarkableNotebook:
     def tool_scope(self, **kwargs):
         prev = self._tool
         self.tool(**kwargs)
+        try:
+            yield self
+        finally:
+            self._tool = prev
+
+    # --- Tool presets ---
+    def define_preset(
+        self,
+        name: str,
+        *,
+        pen: si.Pen,
+        color: si.PenColor = si.PenColor.BLACK,
+        width: int = 2,
+        pressure: int = 100,
+        thickness_scale: float = 1.0,
+    ) -> RemarkableNotebook:
+        """Define or override a tool preset."""
+        self._presets[name] = Tool(
+            pen=pen,
+            color=color,
+            width=width,
+            pressure=pressure,
+            thickness_scale=thickness_scale,
+        )
+        return self
+
+    def use_preset(self, name: str) -> RemarkableNotebook:
+        """Activate a named preset as the current tool."""
+        t = self._presets[name]
+        self._tool = Tool(
+            pen=t.pen,
+            color=t.color,
+            width=t.width,
+            pressure=t.pressure,
+            thickness_scale=t.thickness_scale,
+        )
+        return self
+
+    @contextmanager
+    def preset_scope(self, name: str):
+        prev = self._tool
+        self.use_preset(name)
         try:
             yield self
         finally:
@@ -361,8 +442,9 @@ class RemarkableNotebook:
         pts = list(self._path)
         self._path.clear()
         if len(pts) >= 2:
+            eff = tool or self._tool
             self._lines.setdefault(self._current_layer, []).append(
-                (pts, tool, self._affine)
+                (pts, eff, self._affine)
             )
         return self
 
@@ -386,9 +468,8 @@ class RemarkableNotebook:
         ]
         if close and pts:
             pts.append(pts[0])
-        self._lines.setdefault(self._current_layer, []).append(
-            (pts, tool, self._affine)
-        )
+        eff = tool or self._tool
+        self._lines.setdefault(self._current_layer, []).append((pts, eff, self._affine))
         return self
 
     def line(
@@ -407,9 +488,8 @@ class RemarkableNotebook:
             width=(tool or self._tool).width,
             pressure=(tool or self._tool).pressure,
         )
-        self._lines.setdefault(self._current_layer, []).append(
-            (pts, tool, self._affine)
-        )
+        eff = tool or self._tool
+        self._lines.setdefault(self._current_layer, []).append((pts, eff, self._affine))
         return self
 
     def circle(
@@ -429,9 +509,8 @@ class RemarkableNotebook:
             width=(tool or self._tool).width,
             pressure=(tool or self._tool).pressure,
         )
-        self._lines.setdefault(self._current_layer, []).append(
-            (pts, tool, self._affine)
-        )
+        eff = tool or self._tool
+        self._lines.setdefault(self._current_layer, []).append((pts, eff, self._affine))
         return self
 
     def regular_polygon(
@@ -464,9 +543,8 @@ class RemarkableNotebook:
                 )
             )
         pts.append(pts[0])
-        self._lines.setdefault(self._current_layer, []).append(
-            (pts, tool, self._affine)
-        )
+        eff = tool or self._tool
+        self._lines.setdefault(self._current_layer, []).append((pts, eff, self._affine))
         return self
 
     def star(
@@ -502,9 +580,8 @@ class RemarkableNotebook:
                 )
             )
         pts.append(pts[0])
-        self._lines.setdefault(self._current_layer, []).append(
-            (pts, tool, self._affine)
-        )
+        eff = tool or self._tool
+        self._lines.setdefault(self._current_layer, []).append((pts, eff, self._affine))
         return self
 
     def ellipse(
@@ -543,9 +620,8 @@ class RemarkableNotebook:
             )
         if pts:
             pts.append(pts[0])
-        self._lines.setdefault(self._current_layer, []).append(
-            (pts, tool, self._affine)
-        )
+        eff = tool or self._tool
+        self._lines.setdefault(self._current_layer, []).append((pts, eff, self._affine))
         return self
 
     def arc(
@@ -579,9 +655,8 @@ class RemarkableNotebook:
                     x=float(x), y=float(y), speed=0, direction=0, width=w, pressure=p
                 )
             )
-        self._lines.setdefault(self._current_layer, []).append(
-            (pts, tool, self._affine)
-        )
+        eff = tool or self._tool
+        self._lines.setdefault(self._current_layer, []).append((pts, eff, self._affine))
         return self
 
     def rounded_rect(
