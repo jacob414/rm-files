@@ -248,7 +248,34 @@ should go in =rmfiles.testing=.
 
 ** 2025-09-15 18:33
 
+Good.
+
+Echo it to the decisions record as well, then:
+
 =docs/quickstart.org= and =docs/regression-tests.md= isn't linked in
 the documentation that is being generated via GitHub pages. See to that
 they are. Check that Sphinx supports org-mode since =quickstart.org=
 is written in that. If not, reformat it into something Sphinx supports.
+
+** 2025-09-15 18:50
+
+Here is a difficult assignment, so start with an as thorough
+investigation as possible.
+
+It would be good to be able to create filled shapes. That is not
+supported by the tablets native tools. It have to be implemented using
+work-arounds.
+
+  1. A shape can be filled by having a combination of "dots" that are
+     very wide or scaled up to cover large areas.
+  2. Remaining unfilled areas can be filled using small strokes
+     directly beside each other.
+  3. A combination of scaled up "dots" and the smaller strokes
+     described in (3) can create a filled shape.
+
+Start to make an implementation plan for this. If the implementation
+plan seems solid, try it by implementing a filled ellipse shape, then
+create a fixture file for the filled rect, then return to me with the
+results. If you think this is too difficult, tell me. If you need
+feedback ask me. Write out your implementation plan so that I can see
+it.

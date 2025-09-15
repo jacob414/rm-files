@@ -138,7 +138,7 @@ audit: ## Run all QA checks (optional dead-code excluded)
 	$(MAKE) security
 	@echo "(dead-code analysis available via 'make dead-code')"
 
-qa: test audit docs-build ## Full QA pipeline (includes strict docs build)
+qa: test audit docs-build docs-linkcheck ## Full QA pipeline (includes strict docs build and linkcheck)
 
 ci: clean venv install-dev qa ## CI pipeline
 
