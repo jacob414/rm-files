@@ -59,3 +59,18 @@ def test_regression_star(tmp_path: Path) -> None:
     lines_fixture = _canonical_lines(fixture)
 
     assert lines_new == lines_fixture
+
+
+def test_regression_ellipse(tmp_path: Path) -> None:
+    fixture = Path("fixtures/ellipse_fixture.rm")
+    assert fixture.exists(), "Expected ellipse fixture to exist"
+
+    out = tmp_path / "ellipse.regression.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").ellipse(cx=150, cy=260, rx=80, ry=40, rotation=20)
+    nb.write(out)
+
+    lines_new = _canonical_lines(out)
+    lines_fixture = _canonical_lines(fixture)
+
+    assert lines_new == lines_fixture
