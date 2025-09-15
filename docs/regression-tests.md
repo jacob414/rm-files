@@ -62,6 +62,11 @@ from rmfiles.testing import SAMPLE_LINE_WIDTH, SAMPLE_TOOL
 
 - These are used by tests, examples, and the fixture regeneration script.
 
+## Test helpers
+
+- If you write a helper used by multiple tests (e.g., canonical diffing, point rounding, common scene builders), add it to `rmfiles.testing` so tests, examples, and fixture tools can share a single implementation.
+- Treat `rmfiles.testing` as the central place for generalized testing utilities and sample defaults.
+
 ## Adding a new regression test
 
 1) Create a fixture: generate the `.rm` you expect via the public API and save it under `fixtures/<name>_fixture.rm`.
