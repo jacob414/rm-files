@@ -183,3 +183,7 @@ Promising! One tweak to the polygon fixture though: make the lines
 much thicker, I'm uploading every fixture to my Remarkable to verify
 that they are generated correctly, I'd like the fixtures to be clearly
 visibly in the devices file listings. Do that as one separate commit.
+
+** 2025-09-15 16:15
+
+Good. Proceed to the star.

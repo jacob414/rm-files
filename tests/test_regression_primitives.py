@@ -44,3 +44,18 @@ def test_regression_regular_polygon(tmp_path: Path) -> None:
     lines_fixture = _canonical_lines(fixture)
 
     assert lines_new == lines_fixture
+
+
+def test_regression_star(tmp_path: Path) -> None:
+    fixture = Path("fixtures/star_fixture.rm")
+    assert fixture.exists(), "Expected star fixture to exist"
+
+    out = tmp_path / "star.regression.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").star(cx=330, cy=120, r=60, points=5, inner_ratio=0.45)
+    nb.write(out)
+
+    lines_new = _canonical_lines(out)
+    lines_fixture = _canonical_lines(fixture)
+
+    assert lines_new == lines_fixture
