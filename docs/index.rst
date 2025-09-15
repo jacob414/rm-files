@@ -8,6 +8,7 @@ Welcome to rm-files' documentation.
    :caption: Contents
 
    decisions/index
+   regression-tests
 
 Overview
 --------

@@ -26,6 +26,11 @@ venv: $(VENV_DIR)/bin/activate ## Create venv and install runtime deps
 install-dev: venv ## Install QA dependencies (portable in CI)
 	$(PIP) install -r requirements-qa.txt
 
+check-deps: ## Verify all runtime deps import correctly
+	@set -e; \
+	. $(VENV_DIR)/bin/activate; \
+	python -c "import sys, importlib.util; mods=['rmscene','numpy']; missing=[m for m in mods if importlib.util.find_spec(m) is None]; print('Dependency check: OK' if not missing else f'Missing: {missing}', file=sys.stderr if missing else sys.stdout); sys.exit(0 if not missing else 1)"
+
 clean: ## Remove venv and caches
 	rm -rf $(VENV_DIR)
 	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage
@@ -114,14 +119,14 @@ import os;\
 \
 if not p.exists(): nb=create(); layer=nb.create_layer('Layer 1'); nb.create_triangle(layer, center_x=150, center_y=150, size=100); nb.write(str(p))"
 
-test: install-dev ## Run tests with coverage
+test: install-dev check-deps ## Run tests with coverage
 	# Ensure sample .rm exists (ignored by git)
 	@if [ ! -f sample-files/triangel.rm ]; then \
 		$(PYTHON) examples/make_triangle.py --out sample-files/triangel.rm >/dev/null 2>&1 || true; \
 	fi
 	$(PYTEST) -v --cov=rmfiles --cov-report=term-missing --cov-report=html
 
-test-quick: venv ## Run tests (no coverage)
+test-quick: venv check-deps ## Run tests (no coverage)
 	$(PYTEST) -q
 
 audit: ## Run all QA checks (optional dead-code excluded)
