@@ -138,12 +138,12 @@ audit: ## Run all QA checks (optional dead-code excluded)
 	$(MAKE) security
 	@echo "(dead-code analysis available via 'make dead-code')"
 
-qa: test audit ## Full QA pipeline
+qa: test audit docs-build ## Full QA pipeline (includes strict docs build)
 
 ci: clean venv install-dev qa ## CI pipeline
 
-docs-build: install-dev ## Build Sphinx HTML docs
-	$(SPHINX_BUILD) -b html docs docs/_build/html
+docs-build: install-dev ## Build Sphinx HTML docs (warnings are errors)
+	$(SPHINX_BUILD) -W -b html docs docs/_build/html
 
 docs-linkcheck: install-dev ## Check docs links
 	$(SPHINX_BUILD) -b linkcheck docs docs/_build/linkcheck
