@@ -153,4 +153,9 @@ pre-commit: install-dev ## Run pre-commit hooks against all files (auto-fix, the
 	$(PRECOMMIT) run --all-files --show-diff-on-failure || true
 	$(PRECOMMIT) run --all-files --show-diff-on-failure
 
+# --- Fixtures ---
+
+fixtures-rebuild: venv check-deps ## Regenerate regression test fixtures
+	$(PYTHON) scripts/regenerate_regression_fixtures.py --dir fixtures -v
+
 .PHONY: venv install-dev clean upgrade format lint lint-fix type-check security dead-code test test-quick audit qa ci docs-build docs-linkcheck pre-commit

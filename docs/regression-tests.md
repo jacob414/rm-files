@@ -41,6 +41,16 @@ Guidelines:
 - Do not update fixtures to paper over bugs; fix the code instead.
 - Keep the scene tool and color consistent across fixture and test (tests usually rely on defaults or explicitly set a preset/tool for determinism).
 
+## Regenerating all fixtures
+
+- Use the helper script to regenerate the exact fixtures used by tests:
+
+```bash
+make fixtures-rebuild
+```
+
+This runs `scripts/regenerate_regression_fixtures.py` and writes the golden `.rm` files into `fixtures/`.
+
 ## Adding a new regression test
 
 1) Create a fixture: generate the `.rm` you expect via the public API and save it under `fixtures/<name>_fixture.rm`.
