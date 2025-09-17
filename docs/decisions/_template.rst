@@ -1,6 +1,7 @@
 .. ADR Template (copy as a starting point)
 :orphan:
 
+
 Title (<id>-<short-slug>)
 =========================
 
