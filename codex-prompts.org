@@ -407,3 +407,15 @@ Some data has not been read. The data may have been written using a newer format
 
 The file first.svg that was generated only looks like a blank
 page. Investigate and fix.
+
+** 2025-09-17 19:21
+
+I have a file downloaded from the device, it's the file =filled_0.rm=
+in this directory. It can't be converted to svg, transcript:
+
+#+BEGIN_SRC shell
+sample-files $ rmfiles svg filled_0.rm -o filled_0.svg
+Error: failed to read filled_0.rm: Node does not exist for SceneGroupItemBlock: CrdtId(0, 3)
+#+END_SRC
+
+Investigate and see what the problem is, then fix.
