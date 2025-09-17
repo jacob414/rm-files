@@ -225,15 +225,15 @@ def _collect_layers_from_blocks(blocks: Iterable[Block]) -> list[_LayerExport]:
                 if visible is not None:
                     layer.visible = bool(visible)
         elif isinstance(block, SceneLineItemBlock):
-            layer = layers_by_id.get(block.parent_id)
-            if layer is None:
-                layer = ensure_layer(block.parent_id)
-            layer.strokes.append(block.item.value)
+            target = layers_by_id.get(block.parent_id)
+            if target is None:
+                target = ensure_layer(block.parent_id)
+            target.strokes.append(block.item.value)
         elif isinstance(block, SceneGlyphItemBlock):
-            layer = layers_by_id.get(block.parent_id)
-            if layer is None:
-                layer = ensure_layer(block.parent_id)
-            layer.highlights.append(block.item.value)
+            target = layers_by_id.get(block.parent_id)
+            if target is None:
+                target = ensure_layer(block.parent_id)
+            target.highlights.append(block.item.value)
 
     return [
         layers_by_id[node_id]

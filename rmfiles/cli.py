@@ -406,16 +406,18 @@ def _cmd_svg(args: argparse.Namespace) -> int:
         print(f"Error: failed to read {args.path}: {exc}", file=sys.stderr)
         return 2
 
-    options: dict[str, object] = {}
-    if args.background:
-        options["background"] = args.background
-    if args.include_hidden_layers:
-        options["include_hidden_layers"] = True
-    if args.page_width and args.page_height:
-        options["page_size"] = (args.page_width, args.page_height)
-
     try:
-        scene_to_svg(notebook, args.out, **options)
+        scene_to_svg(
+            notebook,
+            args.out,
+            page_size=(
+                (args.page_width, args.page_height)
+                if args.page_width and args.page_height
+                else None
+            ),
+            background=args.background,
+            include_hidden_layers=bool(args.include_hidden_layers),
+        )
     except Exception as exc:
         print(f"Error: failed to write SVG: {exc}", file=sys.stderr)
         return 2
