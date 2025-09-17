@@ -53,7 +53,6 @@ def test_regression_regular_polygon(tmp_path: Path) -> None:  # pragma: no cover
     )
     nb.regular_polygon(6, cx=150, cy=120, r=60)
     nb.write(out)
-
     assert canonical_lines(out) == canonical_lines(fixture)
 
 

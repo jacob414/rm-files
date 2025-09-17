@@ -250,7 +250,7 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
             u = 0
             while size >= 1024.0 and u < len(units) - 1:
                 size /= 1024.0
-            u += 1
+                u += 1
         return f"{int(size)} bytes" if u == 0 else f"{size:.1f} {units[u]}"
 
     # Inspect .rm files with a focused summary

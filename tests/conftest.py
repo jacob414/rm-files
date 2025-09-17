@@ -6,6 +6,19 @@ import pytest
 
 
 @pytest.fixture(autouse=True, scope="session")
+def ensure_rmscene_available() -> None:
+    """Fail the run immediately when rmscene is missing."""
+    try:
+        __import__("rmscene")
+    except ModuleNotFoundError as exc:  # pragma: no cover - guard path
+        msg = (
+            "Missing dependency: rmscene. Install with 'pip install -r requirements.txt' "
+            "or 'pip install rmscene==0.7.0' before running QA."
+        )
+        raise pytest.UsageError(msg) from exc
+
+
+@pytest.fixture(autouse=True, scope="session")
 def ensure_sample_triangle() -> None:
     """Ensure sample-files/triangel.rm exists for CLI tests.
 

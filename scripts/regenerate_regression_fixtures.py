@@ -58,14 +58,32 @@ def regen_fixtures(fixtures_dir: Path, *, verbose: bool = False) -> None:
     nb.arc(cx=330, cy=260, r=70, start=45, sweep=220)
     write(nb, "arc_fixture.rm")
 
-    # 6) Path with quadratic and cubic (ballpoint tool, width 24)
+    # 6) Path with quadratic and cubic (SAMPLE_TOOL & width)
     nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch").tool(pen=si.Pen.BALLPOINT_1, color=si.PenColor.BLACK, width=24)
+    nb.layer("Sketch").tool(
+        pen=SAMPLE_TOOL, color=si.PenColor.BLACK, width=SAMPLE_LINE_WIDTH
+    )
     nb.move_to(280, 320)
     nb.begin_path().quad_to(360, 320, 360, 380, samples=12).cubic_to(
         360, 430, 300, 430, 280, 390, samples=18
     ).stroke()
     write(nb, "path_fixture.rm")
+
+    # 7) Filled ellipse (using SAMPLE_TOOL & width)
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").tool(
+        pen=SAMPLE_TOOL, color=si.PenColor.BLACK, width=SAMPLE_LINE_WIDTH
+    )
+    nb.filled_ellipse(cx=150, cy=260, rx=80, ry=40, rotation=20)
+    write(nb, "filled_ellipse_fixture.rm")
+
+    # 8) Filled rectangle (using SAMPLE_TOOL & width)
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").tool(
+        pen=SAMPLE_TOOL, color=si.PenColor.BLACK, width=SAMPLE_LINE_WIDTH
+    )
+    nb.filled_rect(60, 320, 180, 110)
+    write(nb, "filled_rect_fixture.rm")
 
 
 def main() -> int:
