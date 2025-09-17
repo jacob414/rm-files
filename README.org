@@ -93,3 +93,16 @@ not available, =rmfiles new= will fail with a clear message.
 - See the org-mode quickstart: [[file:docs/quickstart.org][docs/quickstart.org]]
 - Run the primitives + transforms demo:
   - =python examples/primitives_demo.py --out output/primitives_demo.rm=
+
+** Lab Utilities
+
+For quick spelunking into the raw =rmscene= structures, use the
+=lab_rm_reader.py= script. It loads =sample-files/Extracted_RM_file.rm=
+into a =SceneTree= and prints a readable tree that highlights groups,
+CRDT sequence items, and stroke points. Activate the local virtualenv
+first to ensure the =rmscene= dependency is available:
+
+- =source .venv/bin/activate && python lab_rm_reader.py=
+
+This is a diagnostic helper only; it lives outside the packaged API to
+keep experimentation frictionless.

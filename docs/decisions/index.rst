@@ -15,3 +15,4 @@ scheme (0001, 0002, ...).
    0004-cli-intro
    0005-rmscene-dependency
    0006-qa-dependency-policy
+   0007-scene-tree-lab
