@@ -1,4 +1,5 @@
 .. ADR Template (copy as a starting point)
+
 :orphan:
 
 
