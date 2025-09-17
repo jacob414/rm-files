@@ -106,3 +106,8 @@ first to ensure the =rmscene= dependency is available:
 
 This is a diagnostic helper only; it lives outside the packaged API to
 keep experimentation frictionless.
+
+The packaged API also exposes =rmfiles.scene_to_json()=, a helper that
+emits a JSON representation of any =SceneTree= or =rmscene= object. It is
+useful when you need structured data for logging, snapshotting, or quick
+diffs without relying on the ad-hoc text walker.

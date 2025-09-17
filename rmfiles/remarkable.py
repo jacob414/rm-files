@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, is_dataclass
+from enum import Enum
 from math import cos, sin, tau
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 from rmscene import scene_items as si
 from rmscene.crdt_sequence import CrdtSequence, CrdtSequenceItem
@@ -16,6 +18,7 @@ from rmscene.scene_stream import (
     PageInfoBlock,
     RootTextBlock,
 )
+from rmscene.scene_tree import SceneTree
 from rmscene.tagged_block_common import CrdtId, LwwValue
 
 from .generate import circle_points, rectangle_points, write_rm
@@ -630,6 +633,71 @@ class RemarkableNotebook:
         self._lines.setdefault(self._current_layer, []).append((pts, eff, self._affine))
         return self
 
+    def filled_ellipse(
+        self,
+        cx: float,
+        cy: float,
+        rx: float,
+        ry: float,
+        *,
+        rotation: float = 0.0,
+        spacing_factor: float = 0.8,
+        tool: Tool | None = None,
+    ) -> RemarkableNotebook:
+        """Approximate a filled ellipse using horizontal scanlines.
+
+        Draws a set of parallel line segments inside the ellipse, spaced based
+        on the effective stroke width times ``spacing_factor`` (default 0.8 to
+        provide overlap and avoid gaps).
+        """
+        import math
+
+        eff = tool or self._tool
+        w = float(max(1, eff.width))
+        step = max(1.0, w * float(spacing_factor))
+        # Number of scanlines across 2*ry; include both ends for full coverage
+        n = max(1, int(math.ceil((2.0 * ry) / step)))
+
+        self.tf_push()
+        # Apply rotation about center, then translate to (cx, cy)
+        if rotation:
+            self.tf_rotate(rotation)
+        self.tf_translate(cx, cy)
+        for i in range(n + 1):
+            y = -ry + (2.0 * ry) * (i / n)
+            # half-chord at height y inside ellipse: x = ± rx * sqrt(1 - (y/ry)^2)
+            t = 1.0 - (y / ry) * (y / ry) if ry != 0 else 0.0
+            if t < 0.0:
+                continue
+            half = rx * math.sqrt(max(0.0, t))
+            self.polyline([(-half, y), (half, y)], tool=eff)
+        self.tf_pop()
+        return self
+
+    def filled_rect(
+        self,
+        x: float,
+        y: float,
+        w: float,
+        h: float,
+        *,
+        spacing_factor: float = 0.8,
+        tool: Tool | None = None,
+    ) -> RemarkableNotebook:
+        """Approximate a filled axis-aligned rectangle using horizontal scanlines."""
+        import math
+
+        if w <= 0 or h <= 0:
+            return self
+        eff = tool or self._tool
+        sw = float(max(1, eff.width))
+        step = max(1.0, sw * float(spacing_factor))
+        n = max(1, int(math.ceil(h / step)))
+        for i in range(n + 1):
+            yy = y + (h * (i / n))
+            self.polyline([(x, yy), (x + w, yy)], tool=eff)
+        return self
+
     def arc(
         self,
         cx: float,
@@ -941,3 +1009,132 @@ class RemarkableNotebook:
             write_blocks(buf, blocks, options={"version": self._version})
         else:
             raise ValueError("No output destination provided to write() or constructor")
+
+
+# --- Scene inspection helpers ---
+
+JSONPrimitive = str | int | float | bool | None
+JSONValue = JSONPrimitive | dict[str, "JSONValue"] | list["JSONValue"]
+
+
+def _cid_to_json(cid: CrdtId | None) -> JSONValue:
+    if cid is None:
+        return None
+    return {"part1": cid.part1, "part2": cid.part2}
+
+
+def _cid_to_key(cid: CrdtId | None) -> str:
+    if cid is None:
+        return "None"
+    return f"{cid.part1}:{cid.part2}"
+
+
+def _lww_to_json(value: LwwValue[Any] | None) -> JSONValue:
+    if value is None:
+        return None
+    return {
+        "timestamp": _cid_to_json(value.timestamp),
+        "value": scene_to_data(value.value),
+    }
+
+
+def _dataclass_to_dict(obj: Any) -> dict[str, JSONValue]:
+    data: dict[str, JSONValue] = {"type": type(obj).__name__}
+    for field in fields(obj):
+        data[field.name] = scene_to_data(getattr(obj, field.name))
+    return data
+
+
+def scene_to_data(obj: Any) -> JSONValue:
+    """Convert a SceneTree or rmscene object into JSON-friendly data."""
+
+    if isinstance(obj, SceneTree):
+        return {
+            "type": "SceneTree",
+            "root": scene_to_data(obj.root),
+            "root_text": scene_to_data(obj.root_text) if obj.root_text else None,
+        }
+    if isinstance(obj, si.Group):
+        return {
+            "type": "Group",
+            "node_id": _cid_to_json(obj.node_id),
+            "label": _lww_to_json(obj.label),
+            "visible": _lww_to_json(obj.visible),
+            "children": [scene_to_data(item) for item in obj.children.sequence_items()],
+        }
+    if isinstance(obj, CrdtSequenceItem):
+        return {
+            "type": "CrdtSequenceItem",
+            "item_id": _cid_to_json(obj.item_id),
+            "left_id": _cid_to_json(obj.left_id),
+            "right_id": _cid_to_json(obj.right_id),
+            "deleted_length": obj.deleted_length,
+            "value": scene_to_data(obj.value),
+        }
+    if isinstance(obj, CrdtSequence):
+        return [scene_to_data(item) for item in obj.sequence_items()]
+    if isinstance(obj, si.Line):
+        return {
+            "type": "Line",
+            "tool": obj.tool.name,
+            "color": obj.color.name,
+            "thickness_scale": obj.thickness_scale,
+            "points": [scene_to_data(pt) for pt in obj.points],
+        }
+    if isinstance(obj, si.Point):
+        return {
+            "type": "Point",
+            "x": obj.x,
+            "y": obj.y,
+            "speed": obj.speed,
+            "direction": obj.direction,
+            "width": obj.width,
+            "pressure": obj.pressure,
+        }
+    if isinstance(obj, si.GlyphRange):
+        return {
+            "type": "GlyphRange",
+            "start": obj.start,
+            "length": obj.length,
+            "text": obj.text,
+            "color": obj.color.name,
+            "rectangles": [scene_to_data(rect) for rect in obj.rectangles],
+        }
+    if isinstance(obj, si.Rectangle):
+        return {
+            "type": "Rectangle",
+            "x": obj.x,
+            "y": obj.y,
+            "w": obj.w,
+            "h": obj.h,
+        }
+    if isinstance(obj, si.Text):
+        return {
+            "type": "Text",
+            "items": scene_to_data(obj.items),
+            "styles": {_cid_to_key(k): scene_to_data(v) for k, v in obj.styles.items()},
+            "pos_x": obj.pos_x,
+            "pos_y": obj.pos_y,
+            "width": obj.width,
+        }
+    if isinstance(obj, LwwValue):
+        return _lww_to_json(obj)
+    if isinstance(obj, CrdtId):
+        return _cid_to_json(obj)
+    if isinstance(obj, Enum):
+        return obj.name
+    if is_dataclass(obj):
+        return _dataclass_to_dict(obj)
+    if isinstance(obj, dict):
+        return {str(key): scene_to_data(value) for key, value in obj.items()}
+    if isinstance(obj, Iterable) and not isinstance(obj, str | bytes | bytearray):
+        return [scene_to_data(item) for item in obj]
+    if isinstance(obj, str | int | float | bool) or obj is None:
+        return obj
+    return repr(obj)
+
+
+def scene_to_json(obj: Any, *, indent: int = 2) -> str:
+    """Return a JSON string describing the given rmscene structure."""
+
+    return json.dumps(scene_to_data(obj), indent=indent)

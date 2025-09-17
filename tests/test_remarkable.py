@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # ruff: noqa: I001
 
+import json
 from pathlib import Path
 
 from rmscene import scene_items as si
@@ -41,3 +42,31 @@ def test_turtle_square_and_text_and_highlight(tmp_path: Path) -> None:
                 has_glyph = True
 
     assert has_line and has_text and has_glyph
+
+
+def test_scene_to_json_emits_group_structure() -> None:
+    from rmfiles import scene_to_json
+    from rmscene.scene_stream import read_tree
+
+    sample = Path("sample-files/Extracted_RM_file.rm")
+    with sample.open("rb") as f:
+        tree = read_tree(f)
+
+    payload = scene_to_json(tree, indent=2)
+    data = json.loads(payload)
+
+    assert data["type"] == "SceneTree"
+    root = data["root"]
+    assert root["type"] == "Group"
+    children = root["children"]
+    assert isinstance(children, list) and children
+
+    layer_item = children[0]
+    assert layer_item["type"] == "CrdtSequenceItem"
+    layer_group = layer_item["value"]
+    assert layer_group["type"] == "Group"
+
+    stroke_item = layer_group["children"][0]
+    assert stroke_item["value"]["type"] == "Line"
+    point = stroke_item["value"]["points"][0]
+    assert point["type"] == "Point"
