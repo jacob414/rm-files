@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
-from rmfiles.cli import _cmd_inspect
+from rmfiles.cli import _cmd_inspect, _cmd_svg
 
 
 class DummyArgs:
@@ -58,3 +59,24 @@ def test_cli_inspect_rm_without_humanize(monkeypatch, tmp_path, capsys):
     assert rc == 0
     out = capsys.readouterr().out
     assert "Size: 2.0 KiB" in out
+
+
+def test_cli_svg_export(tmp_path):
+    sample = Path("fixtures/extracted_rm_file.rm")
+    assert sample.exists()
+
+    out = tmp_path / "export.svg"
+    args = argparse.Namespace(
+        path=str(sample),
+        out=str(out),
+        background=None,
+        include_hidden_layers=False,
+        page_width=None,
+        page_height=None,
+        verbose=False,
+    )
+
+    rc = _cmd_svg(args)
+    assert rc == 0
+    assert out.exists()
+    assert "<svg" in out.read_text()

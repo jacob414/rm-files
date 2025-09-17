@@ -393,6 +393,39 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_svg(args: argparse.Namespace) -> int:
+    try:
+        from rmfiles import RemarkableNotebook, scene_to_svg
+    except Exception as exc:  # pragma: no cover
+        print("Error: failed to import SVG helpers:", exc, file=sys.stderr)
+        return 2
+
+    try:
+        notebook = RemarkableNotebook.from_file(args.path)
+    except Exception as exc:
+        print(f"Error: failed to read {args.path}: {exc}", file=sys.stderr)
+        return 2
+
+    options: dict[str, object] = {}
+    if args.background:
+        options["background"] = args.background
+    if args.include_hidden_layers:
+        options["include_hidden_layers"] = True
+    if args.page_width and args.page_height:
+        options["page_size"] = (args.page_width, args.page_height)
+
+    try:
+        scene_to_svg(notebook, args.out, **options)
+    except Exception as exc:
+        print(f"Error: failed to write SVG: {exc}", file=sys.stderr)
+        return 2
+
+    if args.verbose:
+        print(f"Wrote SVG to {args.out}")
+
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="rmfiles",
@@ -435,6 +468,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_inspect.add_argument("path", help="Path to .rm file")
     p_inspect.add_argument("-v", "--verbose", action="store_true")
     p_inspect.set_defaults(func=_cmd_inspect)
+
+    p_svg = sub.add_parser("svg", help="Convert a .rm file to an SVG")
+    p_svg.add_argument("path", help="Path to .rm file")
+    p_svg.add_argument("-o", "--out", required=True, help="Output SVG file path")
+    p_svg.add_argument("--background", help="Background color (CSS value)")
+    p_svg.add_argument(
+        "--include-hidden-layers",
+        action="store_true",
+        help="Render layers marked as hidden",
+    )
+    p_svg.add_argument("--page-width", type=float, help="Override SVG width")
+    p_svg.add_argument("--page-height", type=float, help="Override SVG height")
+    p_svg.add_argument("-v", "--verbose", action="store_true")
+    p_svg.set_defaults(func=_cmd_svg)
 
     return parser
 

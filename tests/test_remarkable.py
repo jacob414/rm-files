@@ -61,3 +61,13 @@ def test_scene_to_json_emits_group_structure() -> None:
     root = data["root"]
     assert root["type"] == "Group"
     assert root["children"], "Expected root to have child sequence items"
+
+
+def test_remarkable_notebook_from_file_loads_layers() -> None:
+    from rmfiles import RemarkableNotebook
+
+    sample = Path("fixtures/extracted_rm_file.rm")
+    nb = RemarkableNotebook.from_file(sample)
+
+    blocks = nb.compile()
+    assert any(isinstance(b, SceneLineItemBlock) for b in blocks)

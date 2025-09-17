@@ -25,6 +25,12 @@ from .generate import circle_points, rectangle_points, write_rm
 from .notebook import NotebookLayer, ReMarkableNotebook
 
 
+def _extract_lww(value: LwwValue[Any] | None) -> Any:
+    if value is None:
+        return None
+    return getattr(value, "value", None)
+
+
 @dataclass
 class Tool:
     pen: si.Pen
@@ -78,6 +84,7 @@ class RemarkableNotebook:
         self._highlights: dict[
             str, list[tuple[str, si.PenColor, list[si.Rectangle]]]
         ] = {}
+        self._layer_visibility: dict[str, bool] = {}
         # current path buffer
         self._path: list[si.Point] = []
         # current tool context
@@ -133,11 +140,73 @@ class RemarkableNotebook:
             ),
         }
 
+    @classmethod
+    def from_file(
+        cls, path: str | Path, *, version: str = "3.1", deg: bool = True
+    ) -> RemarkableNotebook:
+        """Load a notebook from an existing `.rm` file."""
+
+        from rmscene.scene_stream import read_tree
+
+        notebook = cls(version=version, deg=deg)
+        with Path(path).open("rb") as handle:
+            tree = read_tree(handle)
+        notebook._load_from_tree(tree)
+        return notebook
+
+    def _load_from_tree(self, tree: SceneTree) -> None:
+        self._lines.clear()
+        self._highlights.clear()
+        self._layer_visibility.clear()
+        self._current_layer = "Layer 1"
+
+        children = getattr(tree.root, "children", None)
+        if children is None:
+            return
+
+        for item in children.sequence_items():
+            group = item.value
+            if not isinstance(group, si.Group):
+                continue
+
+            label = _extract_lww(group.label)
+            name = label if isinstance(label, str) and label else "Layer"
+            visible_lww = _extract_lww(group.visible)
+            visible = True if visible_lww is None else bool(visible_lww)
+
+            self.layer(name, visible=visible)
+            lines_entry = self._lines.setdefault(name, [])
+            highlights_entry = self._highlights.setdefault(name, [])
+            lines_entry.clear()
+            highlights_entry.clear()
+
+            for child in group.children.sequence_items():
+                value = child.value
+                if isinstance(value, si.Line):
+                    tool = Tool(
+                        pen=value.tool,
+                        color=value.color,
+                        width=int(max((pt.width for pt in value.points), default=2)),
+                        pressure=int(
+                            max((pt.pressure for pt in value.points), default=100)
+                        ),
+                        thickness_scale=value.thickness_scale,
+                    )
+                    lines_entry.append((list(value.points), tool, self._affine))
+                elif isinstance(value, si.GlyphRange):
+                    rects = [
+                        si.Rectangle(x=r.x, y=r.y, w=r.w, h=r.h)
+                        for r in value.rectangles
+                    ]
+                    highlights_entry.append((value.text or "", value.color, rects))
+
     # --- Layer management ---
     def layer(self, name: str, *, visible: bool = True) -> RemarkableNotebook:
         # visible is currently unused; reserved for future compile mapping
         self._current_layer = name
+        self._layer_visibility[name] = visible
         self._lines.setdefault(name, [])
+        self._highlights.setdefault(name, [])
         return self
 
     # --- Tool management ---
@@ -855,7 +924,9 @@ class RemarkableNotebook:
         nb = ReMarkableNotebook()
         layer_objs: dict[str, NotebookLayer] = {}
         for name in self._lines.keys():
-            layer_objs[name] = nb.create_layer(name)
+            layer_objs[name] = nb.create_layer(
+                name, visible=self._layer_visibility.get(name, True)
+            )
         for name, lines in self._lines.items():
             layer = layer_objs[name]
             for pts, tool, aff in lines:

@@ -60,6 +60,8 @@ Examples:
   - =rmfiles new --out output.rm --label "Triangle Layer" --center-x 200 --center-y 200 --size 150=
 - Inspect a file (basic header + optional block counts if =rmscene= is installed):
   - =rmfiles inspect output.rm=
+- Convert an existing =.rm= drawing to SVG:
+  - =rmfiles svg fixtures/extracted_rm_file.rm --out output.svg=
 
 ** Programmatic Usage
 
@@ -77,6 +79,16 @@ create_rectangle_rm("output/rect.rm", x=100, y=120, width=300, height=200)
 from rmfiles.generate import build_rectangle_blocks, write_rm
 blocks, author_uuid = build_rectangle_blocks(x=120, y=140, width=160, height=100)
 write_rm("output/rect2.rm", blocks, version="3.1")
+#+END_SRC
+
+To inspect or transform existing notebooks, you can load them into the
+high-level turtle API:
+
+#+BEGIN_SRC python
+from rmfiles import RemarkableNotebook, scene_to_svg
+
+nb = RemarkableNotebook.from_file("fixtures/extracted_rm_file.rm")
+scene_to_svg(nb, "from-existing.svg")
 #+END_SRC
 
 These helpers assemble a minimal, device-like block sequence (author IDs,
