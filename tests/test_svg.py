@@ -29,6 +29,7 @@ def test_scene_to_svg_writes_paths_and_highlights(tmp_path):
     first_group = groups[0]
     title = first_group.find(_ns("title"))
     assert title is not None and title.text == "Sketch"
+    assert "viewBox" in root.attrib
 
     paths = first_group.findall(_ns("path"))
     assert paths and paths[0].attrib.get("stroke") == "#1976d2"

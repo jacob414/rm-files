@@ -78,5 +78,6 @@ def test_cli_svg_export(tmp_path):
 
     rc = _cmd_svg(args)
     assert rc == 0
-    assert out.exists()
-    assert "<svg" in out.read_text()
+    data = out.read_text()
+    assert "<svg" in data
+    assert "viewBox" in data

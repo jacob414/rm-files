@@ -17,6 +17,12 @@ from rmscene.scene_stream import (
     MigrationInfoBlock,
     PageInfoBlock,
     RootTextBlock,
+    SceneGlyphItemBlock,
+    SceneLineItemBlock,
+    SceneTreeBlock,
+    TreeNodeBlock,
+    read_blocks,
+    read_tree,
 )
 from rmscene.scene_tree import SceneTree
 from rmscene.tagged_block_common import CrdtId, LwwValue
@@ -146,12 +152,16 @@ class RemarkableNotebook:
     ) -> RemarkableNotebook:
         """Load a notebook from an existing `.rm` file."""
 
-        from rmscene.scene_stream import read_tree
-
         notebook = cls(version=version, deg=deg)
-        with Path(path).open("rb") as handle:
-            tree = read_tree(handle)
-        notebook._load_from_tree(tree)
+        path = Path(path)
+        try:
+            with path.open("rb") as handle:
+                tree = read_tree(handle)
+            notebook._load_from_tree(tree)
+        except ValueError:
+            with path.open("rb") as handle:
+                blocks = list(read_blocks(handle))
+            notebook._load_from_blocks(blocks)
         return notebook
 
     def _load_from_tree(self, tree: SceneTree) -> None:
@@ -199,6 +209,72 @@ class RemarkableNotebook:
                         for r in value.rectangles
                     ]
                     highlights_entry.append((value.text or "", value.color, rects))
+
+    def _load_from_blocks(self, blocks: Iterable[Block]) -> None:
+        self._lines.clear()
+        self._highlights.clear()
+        self._layer_visibility.clear()
+
+        layer_data: dict[CrdtId, dict[str, Any]] = {}
+        order: list[CrdtId] = []
+
+        def entry(node_id: CrdtId) -> dict[str, Any]:
+            if node_id not in layer_data:
+                layer_data[node_id] = {
+                    "name": "",
+                    "visible": True,
+                    "lines": [],
+                    "highlights": [],
+                }
+                order.append(node_id)
+            return layer_data[node_id]
+
+        for block in blocks:
+            if isinstance(block, SceneTreeBlock):
+                entry(block.tree_id)
+            elif isinstance(block, TreeNodeBlock):
+                group = block.group
+                if isinstance(group, si.Group):
+                    data = entry(group.node_id)
+                    name = _extract_lww(group.label)
+                    if isinstance(name, str) and name:
+                        data["name"] = name
+                    visible = _extract_lww(group.visible)
+                    if visible is not None:
+                        data["visible"] = bool(visible)
+            elif isinstance(block, SceneLineItemBlock):
+                data = entry(block.parent_id)
+                data["lines"].append(block.item.value)
+            elif isinstance(block, SceneGlyphItemBlock):
+                data = entry(block.parent_id)
+                data["highlights"].append(block.item.value)
+
+        for idx, node_id in enumerate(order, start=1):
+            data = layer_data[node_id]
+            name = data["name"] or f"Layer {idx}"
+            visible = bool(data.get("visible", True))
+            self.layer(name, visible=visible)
+            lines_entry = self._lines.setdefault(name, [])
+            highlights_entry = self._highlights.setdefault(name, [])
+            lines_entry.clear()
+            highlights_entry.clear()
+
+            for line in data["lines"]:
+                tool = Tool(
+                    pen=line.tool,
+                    color=line.color,
+                    width=int(max((pt.width for pt in line.points), default=2)),
+                    pressure=int(max((pt.pressure for pt in line.points), default=100)),
+                    thickness_scale=line.thickness_scale,
+                )
+                lines_entry.append((list(line.points), tool, self._affine))
+
+            for highlight in data["highlights"]:
+                rects = [
+                    si.Rectangle(x=r.x, y=r.y, w=r.w, h=r.h)
+                    for r in highlight.rectangles
+                ]
+                highlights_entry.append((highlight.text or "", highlight.color, rects))
 
     # --- Layer management ---
     def layer(self, name: str, *, visible: bool = True) -> RemarkableNotebook:
