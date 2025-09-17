@@ -327,3 +327,83 @@ Very good! Add relevant docs and decision files that documents
 this. Then commit & push this segment. When pushed, proceed to add a
 walker in =rmfiles.remarkable= that can emit a JSON representation of
 a =rmscene= structure.
+
+** 2025-09-17 17:56
+
+The CI on GitHub fails, from logs:
+
+ =================================== FAILURES ===================================
+___________________ test_scene_to_json_emits_group_structure ___________________
+    def test_scene_to_json_emits_group_structure() -> None:
+        from rmfiles import scene_to_json
+        from rmscene.scene_stream import read_tree
+
+        sample = Path("sample-files/Extracted_RM_file.rm")
+>       with sample.open("rb") as f:
+             ^^^^^^^^^^^^^^^^^
+tests/test_remarkable.py:52:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+self = PosixPath('sample-files/Extracted_RM_file.rm'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'sample-files/Extracted_RM_file.rm'
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/pathlib.py:1013: FileNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_remarkable.py::test_scene_to_json_emits_group_structure - FileNotFoundError: [Errno 2] No such file or directory: 'sample-files/Extracted_RM_file.rm'
+========================= 1 failed, 39 passed in 0.28s =========================
+Error: Process completed with exit code 1.
+
+Work out how this test can be made to run on CI.
+
+** 2025-09-17 18:02
+
+I see. But is it really impossible to have an external fixture in CI?
+An external fixture is usable since it's a known good notebook from an
+actual hardware ReMarkable, by testing against it we know the software
+is able to parse actual ReMarkable files. Se if it's possible to
+include the real file in CI.
+
+** 2025-09-17 18:07
+
+Here is another difficult assignment, so start with an as thorough
+investigation as possible. Use tools and websearches to see if there
+might be Python helper libraries that can be used to implemment.
+
+What would it take to emit SVG files, probably via an implementation
+inspired by the JSON serializing you just developed, maybe via the
+same function used by the JSON emitter, =rmfiles.scene_to_data()=? See
+if you can develop an SVG emitter that writes a SVG file.
+
+** 2025-09-17 18:32
+
+Similarly, I'd like you to enhanche the =rmfiles.RemarkableNotebook=
+to be able to load an =.rm= file, something similar to:
+
+#+BEGIN_SRC python
+  from rmfiles import RemarkableNotebook
+
+  notebook = RemarkableNotebook.from_file("./fixtures/extracted_rm_file.rm")
+#+END_SRC
+
+When done, create a CLI subcommand that converts an existing =.rm=
+file and writes out a SVG from it.
+
+** 2025-09-17 18:55
+
+I ran this command:
+#+BEGIN_SRC shell
+rm-files $ rmfiles svg fixtures/extracted_rm_file.rm -o first.svg
+Some data has not been read. The data may have been written using a newer format than this reader supports.
+#+END_SRC
+
+The file first.svg that was generated only looks like a blank
+page. Investigate and fix.
