@@ -831,6 +831,7 @@ class RemarkableNotebook:
         spacing_factor: float = 0.25,
         tool: Tool | None = None,
         cross_hatch: bool = False,
+        edge_lines: bool = True,
     ) -> RemarkableNotebook:
         """Approximate a filled axis-aligned rectangle using scanlines.
 
@@ -858,6 +859,10 @@ class RemarkableNotebook:
             for j in range(cols + 1):
                 xx = x + (w * (j / cols))
                 self.polyline([(xx, y), (xx, y + h)], tool=eff)
+
+        if edge_lines:
+            self.polyline([(x, y), (x, y + h)], tool=eff)
+            self.polyline([(x + w, y), (x + w, y + h)], tool=eff)
 
         return self
 
