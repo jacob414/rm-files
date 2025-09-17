@@ -45,19 +45,19 @@ def test_turtle_square_and_text_and_highlight(tmp_path: Path) -> None:
 
 
 def test_scene_to_json_emits_group_structure() -> None:
-    from rmfiles import RemarkableNotebook, scene_to_json
+    from rmfiles import scene_to_json
+    from rmscene.scene_stream import read_tree
 
-    nb = RemarkableNotebook(deg=True)
-    nb.layer("Sketch").line(0, 0, 10, 10)
+    fixture = Path("fixtures/extracted_rm_file.rm")
+    assert fixture.exists(), "Expected extracted RM fixture to exist"
 
-    blocks = nb.compile()
+    with fixture.open("rb") as handle:
+        tree = read_tree(handle)
 
-    payload = scene_to_json(blocks, indent=2)
+    payload = scene_to_json(tree, indent=2)
     data = json.loads(payload)
 
-    assert isinstance(data, list)
-    assert any(
-        block.get("type") == "SceneGroupItemBlock"
-        for block in data
-        if isinstance(block, dict)
-    )
+    assert data["type"] == "SceneTree"
+    root = data["root"]
+    assert root["type"] == "Group"
+    assert root["children"], "Expected root to have child sequence items"
