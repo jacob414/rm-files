@@ -30,3 +30,14 @@ def test_regression_filled_rect(tmp_path: Path) -> None:
     nb.write(out)
 
     assert canonical_lines(out) == canonical_lines(fixture)
+
+
+def test_regression_filled_rect_roundtrip(tmp_path: Path) -> None:
+    fixture = Path("fixtures/filled_rect_edges_device.rm")
+    assert fixture.exists(), "Expected filled rect device fixture to exist"
+
+    nb = RemarkableNotebook.from_file(fixture)
+    out = tmp_path / "filled_rect.roundtrip.rm"
+    nb.write(out)
+
+    assert canonical_lines(out) == canonical_lines(fixture)
