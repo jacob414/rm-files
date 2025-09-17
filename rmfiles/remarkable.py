@@ -828,10 +828,18 @@ class RemarkableNotebook:
         w: float,
         h: float,
         *,
-        spacing_factor: float = 0.8,
+        spacing_factor: float = 0.25,
         tool: Tool | None = None,
+        cross_hatch: bool = False,
     ) -> RemarkableNotebook:
-        """Approximate a filled axis-aligned rectangle using horizontal scanlines."""
+        """Approximate a filled axis-aligned rectangle using scanlines.
+
+        ``spacing_factor`` controls the distance between scanlines as a
+        multiple of the effective tool width. Smaller values yield denser
+        fills. When ``cross_hatch`` is True a second pass of vertical lines is
+        drawn for better coverage.
+        """
+
         import math
 
         if w <= 0 or h <= 0:
@@ -839,10 +847,18 @@ class RemarkableNotebook:
         eff = tool or self._tool
         sw = float(max(1, eff.width))
         step = max(1.0, sw * float(spacing_factor))
-        n = max(1, int(math.ceil(h / step)))
-        for i in range(n + 1):
-            yy = y + (h * (i / n))
+
+        rows = max(1, int(math.ceil(h / step)))
+        for i in range(rows + 1):
+            yy = y + (h * (i / rows))
             self.polyline([(x, yy), (x + w, yy)], tool=eff)
+
+        if cross_hatch:
+            cols = max(1, int(math.ceil(w / step)))
+            for j in range(cols + 1):
+                xx = x + (w * (j / cols))
+                self.polyline([(xx, y), (xx, y + h)], tool=eff)
+
         return self
 
     def arc(

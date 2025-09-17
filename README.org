@@ -91,6 +91,15 @@ nb = RemarkableNotebook.from_file("fixtures/extracted_rm_file.rm")
 scene_to_svg(nb, "from-existing.svg")
 #+END_SRC
 
+Filled primitives support tweaks for coverage. For example, a denser rectangle
+fill with a cross-hatch pass:
+
+#+BEGIN_SRC python
+nb = RemarkableNotebook(deg=True)
+nb.layer("Sketch").tool(pen=SAMPLE_TOOL, width=SAMPLE_LINE_WIDTH)
+nb.filled_rect(60, 320, 180, 110, spacing_factor=0.25, cross_hatch=True)
+#+END_SRC
+
 These helpers assemble a minimal, device-like block sequence (author IDs,
 migration and page info, scene tree, layer + stroke) using =rmscene= and write
 with a compatible version string. Coordinates are in pixels (typical page
