@@ -111,3 +111,21 @@ The packaged API also exposes =rmfiles.scene_to_json()=, a helper that
 emits a JSON representation of any =SceneTree= or =rmscene= object. It is
 useful when you need structured data for logging, snapshotting, or quick
 diffs without relying on the ad-hoc text walker.
+
+** SVG Export
+
+Use =rmfiles.scene_to_svg()= to turn notebook structures into SVG files.
+It accepts a =RemarkableNotebook=, a block list, a =SceneTree=, or a path
+to a =.rm= file. Layers are mapped to =<g>= groups, strokes become SVG
+paths, and text highlights render as translucent rectangles.
+
+#+BEGIN_SRC python
+from rmfiles import RemarkableNotebook, scene_to_svg
+nb = RemarkableNotebook(deg=True)
+nb.layer("Sketch").line(0, 0, 150, 80)
+scene_to_svg(nb, "out.svg", background="#ffffff")
+#+END_SRC
+
+Hidden layers are skipped by default; pass
+=include_hidden_layers=True= to keep them in the output (they are tagged
+with =display:none= so they remain hidden until toggled by a viewer).

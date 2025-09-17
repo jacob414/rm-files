@@ -18,5 +18,6 @@ setup(
         "IPython",
         "ipdb",
         "humanize",
+        "svgwrite",
     ],
 )

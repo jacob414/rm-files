@@ -37,6 +37,7 @@ Consequences
 * The documentation now points to the script so new contributors know
   where to start when exploring decoded scenes.
 * Future tooling (for example, JSON emitters or visualisers) can reuse
-  the same traversal strategy. The first packaged helper derived from
-  this work is :func:`rmfiles.scene_to_json`, which produces structured
-  JSON for ``SceneTree`` objects.
+  the same traversal strategy. The first packaged helpers derived from
+  this work are :func:`rmfiles.scene_to_json` and
+  :func:`rmfiles.scene_to_svg`, which produce structured JSON and SVG
+  output for ``SceneTree`` objects.

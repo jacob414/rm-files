@@ -6,3 +6,4 @@ ipdb
 pytest
 black
 humanize
+svgwrite

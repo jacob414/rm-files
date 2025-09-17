@@ -15,12 +15,14 @@ from .generate import (
 )
 from .notebook import NotebookIdGenerator, NotebookLayer, ReMarkableNotebook, create
 from .remarkable import RemarkableNotebook, scene_to_json
+from .svg import scene_to_svg
 
 __all__ = [
     "create",
     "ReMarkableNotebook",
     "RemarkableNotebook",
     "scene_to_json",
+    "scene_to_svg",
     "NotebookLayer",
     "NotebookIdGenerator",
     "rectangle_points",
