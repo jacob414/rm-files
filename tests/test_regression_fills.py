@@ -17,3 +17,16 @@ def test_regression_filled_ellipse(tmp_path: Path) -> None:
     nb.write(out)
 
     assert canonical_lines(out) == canonical_lines(fixture)
+
+
+def test_regression_filled_rect(tmp_path: Path) -> None:
+    fixture = Path("fixtures/filled_rect_fixture.rm")
+    assert fixture.exists(), "Expected filled rect fixture to exist"
+
+    out = tmp_path / "filled_rect.regression.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").tool(pen=SAMPLE_TOOL, width=SAMPLE_LINE_WIDTH)
+    nb.filled_rect(60, 320, 180, 110)
+    nb.write(out)
+
+    assert canonical_lines(out) == canonical_lines(fixture)

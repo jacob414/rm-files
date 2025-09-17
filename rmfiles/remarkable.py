@@ -251,6 +251,8 @@ class RemarkableNotebook:
 
         for idx, node_id in enumerate(order, start=1):
             data = layer_data[node_id]
+            if not data["lines"] and not data["highlights"]:
+                continue
             name = data["name"] or f"Layer {idx}"
             visible = bool(data.get("visible", True))
             self.layer(name, visible=visible)
