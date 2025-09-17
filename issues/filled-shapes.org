@@ -1,0 +1,95 @@
+* Filled shapes
+
+Here’s a thorough investigation and an implementation plan, followed
+by working code and results.
+
+** Implementation Plan
+
+*** Goals
+
+- Provide “filled” shapes in =.rm= files despite no native fill in the
+  format.
+- Keep the approach deterministic, robust, and testable with fixtures.
+- Avoid huge file sizes or heavy block counts where possible.
+
+*** Constraints and Observations
+
+- .rm v6 stores strokes (lines), not polygon fills.
+- Rendering thickness uses per-point width and thickness_scale; wider
+  strokes cover more area.
+- We have good control over geometry and affine transforms in
+  =RemarkableNotebook= (tf_* helpers).
+- Tools differ in texture/appearance; consistent tooling yields
+  consistent fixtures.
+
+*** Strategies Considered
+
+- Fat “dots” as discs
+    - Pros: simple, isotropic coverage
+    - Cons: many strokes required to cover larger regions;
+      inefficient; difficult to avoid pinholes near borders
+- Dense side-by-side strokes (scanlines)
+    - Pros: deterministic, straightforward coverage using geometry;
+      good control over spacing and overlap
+    - Cons: can be many strokes for large areas; edges need careful
+      handling
+- Hybrid (large dots + scanlines)
+    - Pros: reduce stroke count by covering large swaths with dots and
+      corrections with scanlines
+    - Cons: complexity outweighs benefits for now; multiple heuristics
+      needed
+
+*** Chosen Approach: Scanline Fills
+
+- Filled ellipse:
+    - Use horizontal scanlines inside an ellipse.
+    - Work in local coordinates, then rotate/translate via =tf_rotate= +
+=tf_translate=.
+    - For =yf= from =-ry= to =+ry=, compute =half-chord x = ±
+      rx*sqrt(1 - (y/ry)^2)=, draw a 2-point polyline between =(-x, y)=
+      and =(x, y)=.
+    - Spacing ~= =tool width * spacing_factor= (default =0.8=) for
+      overlap.
+- Filled rectangle:
+    - Use horizontal scanlines from =x..x+w= at multiple =y=’s across
+      the height.
+    - Similar spacing heuristic based on tool width.
+
+*** Determinism and Testability
+
+- Use =SAMPLE_TOOL= and =SAMPLE_LINE_WIDTH= for fixtures and examples
+  (rmfiles.testing).
+- Canonicalize lines in tests by rounding point coordinates; compare
+  tool/color ids and points.
+
+*** Performance and File Size
+
+- Scanlines scale roughly linearly with height/width; spacing tied to
+  stroke width keeps counts reasonable.
+- We keep spacing_factor at =0.8= to prevent gaps without crazy overlap.
+
+*** Future Enhancements (optional)
+
+- Hybrid fill (dots first, then scanlines).
+- Sparser fills with thickness_scale tuning per tool for efficiency.
+- Anti-gap heuristics near curved boundaries.
+
+** What I implemented
+
+*** APIs added (scanline fills)
+
+- rmfiles.remarkable.RemarkableNotebook.filled_ellipse(cx, cy, rx, ry,
+rotation=0, spacing_factor=0.8, tool=None)
+- rmfiles.remarkable.RemarkableNotebook.filled_rect(x, y, w, h,
+spacing_factor=0.8, tool=None)
+
+*** Deterministic settings
+
+- =rmfiles.testing=
+    - =SAMPLE_LINE_WIDTH = 24=
+    - =SAMPLE_TOOL = FINELINER_1=
+    - =canonical_lines= helper for regression comparisons
+
+*** Regression test
+
+- =tests/test_regression_fills.py=: tests =filled_ellipse= against a fixture.
