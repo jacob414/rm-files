@@ -419,3 +419,39 @@ Error: failed to read filled_0.rm: Node does not exist for SceneGroupItemBlock: 
 #+END_SRC
 
 Investigate and see what the problem is, then fix.
+
+** 2025-09-17 20:46
+
+Good, now it converted the file. The resulting SVG shows how the
+result of the rect fill primitive. Use it to troubleshot the rect fill
+primitive.
+
+** 2025-09-17 20:58
+
+The new filled rect file =output/filled_rect_device.rm= still looks
+blank, I have put a photo in the project directory:
+=./filled_rect_on_device_photo.png=
+
+Investigate and fix.
+
+** 2025-09-17 21:07
+
+The output file =output/filled_rect_device_fineliner.rm= renders like
+the local photo =-/filled_rect_device_fineliner.png=. There are still
+problems, diagnose and try again.
+
+** 2025-09-17 21:20
+
+Much better! However, the lines have small roundings at two
+sides. Would it be possible to use two vertical lines at the sides
+with the rounded bumps to make the rect more straight sides. Here's
+how it looks in 5x zoom on the device:
+
+** 2025-09-17 21:30
+
+Good! Make the current result =./output/filled_rect_device_edges.rm=
+the basis for another primitive shape regression test.
+
+** 2025-09-17 21:41
+
+=.venv/bin/mypy rmfiles= gives errors. Fix.
