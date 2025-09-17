@@ -110,6 +110,20 @@ def scene_to_svg(
 
     drawing = svgwrite.Drawing(str(dest), size=(width, height))
 
+    bounds = _compute_bounds(layers)
+    if bounds is not None:
+        min_x, min_y, max_x, max_y = bounds
+        pad = 8.0
+        min_x -= pad
+        min_y -= pad
+        max_x += pad
+        max_y += pad
+        view_w = max(max_x - min_x, 1.0)
+        view_h = max(max_y - min_y, 1.0)
+        drawing.viewbox(min_x, min_y, view_w, view_h)
+    else:
+        drawing.viewbox(0, 0, width, height)
+
     if background:
         drawing.add(drawing.rect(insert=(0, 0), size=(width, height), fill=background))
 
@@ -282,3 +296,25 @@ def _add_highlight(
                 stroke="none",
             )
         )
+
+
+def _compute_bounds(
+    layers: list[_LayerExport],
+) -> tuple[float, float, float, float] | None:
+    xs: list[float] = []
+    ys: list[float] = []
+
+    for layer in layers:
+        for line in layer.strokes:
+            for pt in line.points:
+                xs.append(pt.x)
+                ys.append(pt.y)
+        for highlight in layer.highlights:
+            for rect in highlight.rectangles:
+                xs.extend([rect.x, rect.x + rect.w])
+                ys.extend([rect.y, rect.y + rect.h])
+
+    if not xs or not ys:
+        return None
+
+    return (min(xs), min(ys), max(xs), max(ys))
