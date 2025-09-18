@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, fields, is_dataclass
 from enum import Enum
@@ -865,6 +865,87 @@ class RemarkableNotebook:
             self.polyline([(x + w, y), (x + w, y + h)], tool=eff)
 
         return self
+
+    def filled_polygon(
+        self,
+        points: Sequence[tuple[float, float]],
+        *,
+        spacing_factor: float = 0.25,
+        tool: Tool | None = None,
+        cross_hatch: bool = False,
+        edge_outline: bool = False,
+    ) -> RemarkableNotebook:
+        """Approximate a filled polygon using scanlines."""
+
+        pts = [(float(px), float(py)) for px, py in points]
+        if len(pts) < 3:
+            return self
+
+        eff = tool or self._tool
+        sw = float(max(1, eff.width))
+        step = max(1.0, sw * float(spacing_factor))
+
+        self._fill_polygon_scanlines(pts, eff, step, vertical=False)
+
+        if cross_hatch:
+            swapped = [(py, px) for px, py in pts]
+            self._fill_polygon_scanlines(swapped, eff, step, vertical=True)
+
+        if edge_outline:
+            for i in range(len(pts)):
+                p1 = pts[i]
+                p2 = pts[(i + 1) % len(pts)]
+                self.polyline([p1, p2], tool=eff)
+
+        return self
+
+    def _fill_polygon_scanlines(
+        self,
+        pts: Sequence[tuple[float, float]],
+        eff: Tool,
+        step: float,
+        *,
+        vertical: bool = False,
+    ) -> None:
+        if not pts:
+            return
+
+        min_y = min(p[1] for p in pts)
+        max_y = max(p[1] for p in pts)
+        if max_y - min_y <= 0:
+            return
+
+        y = min_y
+        n = len(pts)
+        eps = step * 0.5
+        while y <= max_y + eps:
+            intersections: list[float] = []
+            for i in range(n):
+                x1, y1 = pts[i]
+                x2, y2 = pts[(i + 1) % n]
+
+                if y1 == y2:
+                    continue
+
+                ymin = min(y1, y2)
+                ymax = max(y1, y2)
+                if y < ymin or y >= ymax:
+                    continue
+
+                t = (y - y1) / (y2 - y1)
+                intersections.append(x1 + t * (x2 - x1))
+
+            if intersections:
+                intersections.sort()
+                for i in range(0, len(intersections) - 1, 2):
+                    x_start = intersections[i]
+                    x_end = intersections[i + 1]
+                    if vertical:
+                        self.polyline([(y, x_start), (y, x_end)], tool=eff)
+                    else:
+                        self.polyline([(x_start, y), (x_end, y)], tool=eff)
+
+            y += step
 
     def arc(
         self,

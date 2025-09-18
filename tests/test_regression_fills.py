@@ -41,3 +41,24 @@ def test_regression_filled_rect_roundtrip(tmp_path: Path) -> None:
     nb.write(out)
 
     assert canonical_lines(out) == canonical_lines(fixture)
+
+
+def test_regression_filled_polygon(tmp_path: Path) -> None:
+    fixture = Path("fixtures/filled_polygon_fixture.rm")
+    assert fixture.exists(), "Expected filled polygon fixture to exist"
+
+    out = tmp_path / "filled_polygon.regression.rm"
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").tool(pen=SAMPLE_TOOL, width=SAMPLE_LINE_WIDTH)
+    nb.filled_polygon(
+        [
+            (80, 320),
+            (200, 300),
+            (240, 360),
+            (200, 420),
+            (80, 400),
+        ]
+    )
+    nb.write(out)
+
+    assert canonical_lines(out) == canonical_lines(fixture)

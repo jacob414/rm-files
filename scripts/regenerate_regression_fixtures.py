@@ -85,6 +85,22 @@ def regen_fixtures(fixtures_dir: Path, *, verbose: bool = False) -> None:
     nb.filled_rect(60, 320, 180, 110)
     write(nb, "filled_rect_fixture.rm")
 
+    # 9) Filled polygon with scanlines
+    nb = RemarkableNotebook(deg=True)
+    nb.layer("Sketch").tool(
+        pen=SAMPLE_TOOL, color=si.PenColor.BLACK, width=SAMPLE_LINE_WIDTH
+    )
+    nb.filled_polygon(
+        [
+            (80, 320),
+            (200, 300),
+            (240, 360),
+            (200, 420),
+            (80, 400),
+        ]
+    )
+    write(nb, "filled_polygon_fixture.rm")
+
 
 def main() -> int:
     p = argparse.ArgumentParser(

@@ -100,6 +100,23 @@ nb.layer("Sketch").tool(pen=SAMPLE_TOOL, width=SAMPLE_LINE_WIDTH)
 nb.filled_rect(60, 320, 180, 110, spacing_factor=0.25, cross_hatch=True)
 #+END_SRC
 
+Polygons can also be filled with the scanline approach:
+
+#+BEGIN_SRC python
+nb.filled_polygon(
+    [
+        (80, 320),
+        (200, 300),
+        (240, 360),
+        (200, 420),
+        (80, 400),
+    ],
+    spacing_factor=0.25,
+    cross_hatch=True,
+    edge_outline=True,
+)
+#+END_SRC
+
 These helpers assemble a minimal, device-like block sequence (author IDs,
 migration and page info, scene tree, layer + stroke) using =rmscene= and write
 with a compatible version string. Coordinates are in pixels (typical page
