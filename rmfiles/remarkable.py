@@ -1001,7 +1001,12 @@ class RemarkableNotebook:
                 for i in range(0, len(intersections) - 1, 2):
                     x_start = intersections[i]
                     x_end = intersections[i + 1]
-                    self.polyline([(x_start, y), (x_end, y)], tool=eff)
+                    # Shrink ends by half stroke width to keep round caps inside
+                    r = float(max(1, eff.width)) * 0.5
+                    xs = x_start + r
+                    xe = x_end - r
+                    if xe - xs > 0.1:
+                        self.polyline([(xs, y), (xe, y)], tool=eff)
 
             y += step
 
