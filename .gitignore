@@ -172,3 +172,5 @@ output/
 .claude/
 
 .codex-min.org
+
+tmp/

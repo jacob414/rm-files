@@ -455,3 +455,130 @@ the basis for another primitive shape regression test.
 ** 2025-09-17 21:41
 
 =.venv/bin/mypy rmfiles= gives errors. Fix.
+
+** 2025-09-17 21:52
+
+There seems too be build problems on CI. From logs:
+
+reading sources... [ 58%] decisions/0007-scene-tree-lab
+reading sources... [ 67%] decisions/_template
+reading sources... [ 75%] decisions/index
+reading sources... [ 83%] index
+reading sources... [ 92%] quickstart
+reading sources... [100%] regression-tests
+/home/runner/work/rm-files/rm-files/docs/decisions/0001-qa-split-and-ci.rst:2: WARNING: Title underline too short.
+
+0001: QA Split, CI, and Docs
+=========================== [docutils]
+looking for now-outdated files... none found
+pickling environment... done
+/home/runner/work/rm-files/rm-files/docs/decisions/_template.rst: WARNING: document isn't included in any toctree [toc.not_included]
+checking consistency... done
+preparing documents... done
+copying assets...
+copying static files...
+Writing evaluated template result to /home/runner/work/rm-files/rm-files/docs/_build/html/_static/basic.css
+Writing evaluated template result to /home/runner/work/rm-files/rm-files/docs/_build/html/_static/language_data.js
+Writing evaluated template result to /home/runner/work/rm-files/rm-files/docs/_build/html/_static/documentation_options.js
+Writing evaluated template result to /home/runner/work/rm-files/rm-files/docs/_build/html/_static/js/versions.js
+copying static files: done
+copying extra files...
+copying extra files: done
+copying assets: done
+writing output... [  8%] decisions/0001-qa-split-and-ci
+writing output... [ 17%] decisions/0002-github-pages-deploy
+writing output... [ 25%] decisions/0003-rmdoc-archive-format
+writing output... [ 33%] decisions/0004-cli-intro
+writing output... [ 42%] decisions/0005-rmscene-dependency
+writing output... [ 50%] decisions/0006-qa-dependency-policy
+writing output... [ 58%] decisions/0007-scene-tree-lab
+writing output... [ 67%] decisions/_template
+writing output... [ 75%] decisions/index
+writing output... [ 83%] index
+writing output... [ 92%] quickstart
+writing output... [100%] regression-tests
+generating indices... genindex done
+writing additional pages... search done
+dumping search index in English (code: en)... done
+dumping object inventory... done
+build finished with problems, 2 warnings (with warnings treated as errors).
+make: *** [Makefile:146: docs-build] Error 1
+Error: Process completed with exit code 2.
+
+** 2025-09-17 21:59
+
+I can still see complaints from Ruff and Sphinx when I run 'make
+qa'. Continue to iterate until 'make qa' runs completely without errors.
+
+** 2025-09-17 22:03
+
+CI build reports failure, from log:
+
+building [mo]: targets for 0 po files that are out of date
+writing output...
+building [html]: targets for 12 source files that are out of date
+updating environment: [new config] 12 added, 0 changed, 0 removed
+reading sources... [  8%] decisions/0001-qa-split-and-ci
+reading sources... [ 17%] decisions/0002-github-pages-deploy
+reading sources... [ 25%] decisions/0003-rmdoc-archive-format
+reading sources... [ 33%] decisions/0004-cli-intro
+reading sources... [ 42%] decisions/0005-rmscene-dependency
+reading sources... [ 50%] decisions/0006-qa-dependency-policy
+reading sources... [ 58%] decisions/0007-scene-tree-lab
+reading sources... [ 67%] decisions/_template
+reading sources... [ 75%] decisions/index
+reading sources... [ 83%] index
+reading sources... [ 92%] quickstart
+reading sources... [100%] regression-tests
+/home/runner/work/rm-files/rm-files/docs/decisions/_template.rst:2: WARNING: Explicit markup ends without a blank line; unexpected unindent. [docutils]
+looking for now-outdated files... none found
+pickling environment... done
+checking consistency... done
+preparing documents... done
+copying assets...
+copying static files...
+Writing evaluated template result to /home/runner/work/rm-files/rm-files/docs/_build/html/_static/basic.css
+Writing evaluated template result to /home/runner/work/rm-files/rm-files/docs/_build/html/_static/language_data.js
+Writing evaluated template result to /home/runner/work/rm-files/rm-files/docs/_build/html/_static/documentation_options.js
+Writing evaluated template result to /home/runner/work/rm-files/rm-files/docs/_build/html/_static/js/versions.js
+copying static files: done
+copying extra files...
+copying extra files: done
+copying assets: done
+writing output... [  8%] decisions/0001-qa-split-and-ci
+writing output... [ 17%] decisions/0002-github-pages-deploy
+writing output... [ 25%] decisions/0003-rmdoc-archive-format
+writing output... [ 33%] decisions/0004-cli-intro
+writing output... [ 42%] decisions/0005-rmscene-dependency
+writing output... [ 50%] decisions/0006-qa-dependency-policy
+writing output... [ 58%] decisions/0007-scene-tree-lab
+writing output... [ 67%] decisions/_template
+writing output... [ 75%] decisions/index
+writing output... [ 83%] index
+writing output... [ 92%] quickstart
+writing output... [100%] regression-tests
+generating indices... genindex done
+writing additional pages... search done
+dumping search index in English (code: en)... done
+dumping object inventory... done
+build finished with problems, 1 warning (with warnings treated as errors).
+make: *** [Makefile:146: docs-build] Error 1
+Error: Process completed with exit code 2.
+
+Fix.
+
+** 2025-09-18 22:36
+
+Start to implement the next primitive for filled shapes, polygons. Use
+the same methodology as you did with rects.
+
+** 2025-09-19 13:06
+
+I have created a new =./tmp= directory that will henceforth be ignored
+by git and should be the place were we put example outputs for each
+other to view.
+
+  1. Add the appropriate 'decisions' entry for this practice
+  2. Have a look at the 2 image files I've put there. Is it possible
+     to make the sides of the polygon a bit less jagged? I'm guessing
+     by using a similar method for the jagged rect sides.
