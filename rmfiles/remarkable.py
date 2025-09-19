@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, fields, is_dataclass
@@ -35,6 +36,56 @@ def _extract_lww(value: LwwValue[Any] | None) -> Any:
     if value is None:
         return None
     return getattr(value, "value", None)
+
+
+def _polygon_centroid(pts: Sequence[tuple[float, float]]) -> tuple[float, float]:
+    area = 0.0
+    cx = 0.0
+    cy = 0.0
+    n = len(pts)
+    for i in range(n):
+        x1, y1 = pts[i]
+        x2, y2 = pts[(i + 1) % n]
+        cross = x1 * y2 - x2 * y1
+        area += cross
+        cx += (x1 + x2) * cross
+        cy += (y1 + y2) * cross
+
+    if abs(area) < 1e-6:
+        avg_x = sum(x for x, _ in pts) / n
+        avg_y = sum(y for _, y in pts) / n
+        return (avg_x, avg_y)
+
+    area *= 0.5
+    factor = 1.0 / (6.0 * area)
+    return (cx * factor, cy * factor)
+
+
+def _polygon_principal_angle(
+    pts: Sequence[tuple[float, float]],
+    centroid: tuple[float, float],
+    *,
+    degrees: bool,
+) -> float:
+    if not pts:
+        return 0.0
+
+    cx, cy = centroid
+    sxx = syy = sxy = 0.0
+    for x, y in pts:
+        dx = x - cx
+        dy = y - cy
+        sxx += dx * dx
+        syy += dy * dy
+        sxy += dx * dy
+
+    if abs(sxy) < 1e-9 and abs(sxx - syy) < 1e-9:
+        return 0.0
+
+    angle = 0.5 * math.atan2(2.0 * sxy, sxx - syy)
+    if degrees:
+        return math.degrees(angle)
+    return angle
 
 
 @dataclass
@@ -885,11 +936,23 @@ class RemarkableNotebook:
         sw = float(max(1, eff.width))
         step = max(1.0, sw * float(spacing_factor))
 
-        self._fill_polygon_scanlines(pts, eff, step, vertical=False)
+        centroid = _polygon_centroid(pts)
+        angle = _polygon_principal_angle(pts, centroid, degrees=self._deg)
+
+        local_pts = [(px - centroid[0], py - centroid[1]) for px, py in pts]
+
+        self.tf_push()
+        self.tf_translate(*centroid)
+        self.tf_rotate(angle)
+        self._fill_polygon_scanlines(local_pts, eff, step)
 
         if cross_hatch:
-            swapped = [(py, px) for px, py in pts]
-            self._fill_polygon_scanlines(swapped, eff, step, vertical=True)
+            self.tf_push()
+            self.tf_rotate(90.0 if self._deg else math.pi / 2.0)
+            self._fill_polygon_scanlines(local_pts, eff, step)
+            self.tf_pop()
+
+        self.tf_pop()
 
         if edge_outline:
             for i in range(len(pts)):
@@ -904,8 +967,6 @@ class RemarkableNotebook:
         pts: Sequence[tuple[float, float]],
         eff: Tool,
         step: float,
-        *,
-        vertical: bool = False,
     ) -> None:
         if not pts:
             return
@@ -940,10 +1001,7 @@ class RemarkableNotebook:
                 for i in range(0, len(intersections) - 1, 2):
                     x_start = intersections[i]
                     x_end = intersections[i + 1]
-                    if vertical:
-                        self.polyline([(y, x_start), (y, x_end)], tool=eff)
-                    else:
-                        self.polyline([(x_start, y), (x_end, y)], tool=eff)
+                    self.polyline([(x_start, y), (x_end, y)], tool=eff)
 
             y += step
 

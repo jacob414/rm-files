@@ -167,3 +167,6 @@ scene_to_svg(nb, "out.svg", background="#ffffff")
 Hidden layers are skipped by default; pass
 =include_hidden_layers=True= to keep them in the output (they are tagged
 with =display:none= so they remain hidden until toggled by a viewer).
+
+Share screenshots or exported artifacts in the git-ignored =tmp/= directory
+so they stay out of commits (see ADR 0008).

@@ -16,3 +16,4 @@ scheme (0001, 0002, ...).
    0005-rmscene-dependency
    0006-qa-dependency-policy
    0007-scene-tree-lab
+   0008-shared-temp-outputs
