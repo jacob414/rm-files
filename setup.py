@@ -19,5 +19,6 @@ setup(
         "ipdb",
         "humanize",
         "svgwrite",
+        "shapely",
     ],
 )

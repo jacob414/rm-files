@@ -7,3 +7,4 @@ pytest
 black
 humanize
 svgwrite
+shapely

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import warnings
 from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, fields, is_dataclass
@@ -27,6 +28,15 @@ from rmscene.scene_stream import (
 )
 from rmscene.scene_tree import SceneTree
 from rmscene.tagged_block_common import CrdtId, LwwValue
+from shapely import affinity
+from shapely.geometry import (
+    JOIN_STYLE,
+    GeometryCollection,
+    LineString,
+    MultiLineString,
+    Polygon,
+)
+from shapely.geometry.base import BaseGeometry
 
 from .generate import circle_points, rectangle_points, write_rm
 from .notebook import NotebookLayer, ReMarkableNotebook
@@ -38,54 +48,66 @@ def _extract_lww(value: LwwValue[Any] | None) -> Any:
     return getattr(value, "value", None)
 
 
-def _polygon_centroid(pts: Sequence[tuple[float, float]]) -> tuple[float, float]:
-    area = 0.0
-    cx = 0.0
-    cy = 0.0
-    n = len(pts)
-    for i in range(n):
-        x1, y1 = pts[i]
-        x2, y2 = pts[(i + 1) % n]
-        cross = x1 * y2 - x2 * y1
-        area += cross
-        cx += (x1 + x2) * cross
-        cy += (y1 + y2) * cross
-
-    if abs(area) < 1e-6:
-        avg_x = sum(x for x, _ in pts) / n
-        avg_y = sum(y for _, y in pts) / n
-        return (avg_x, avg_y)
-
-    area *= 0.5
-    factor = 1.0 / (6.0 * area)
-    return (cx * factor, cy * factor)
-
-
-def _polygon_principal_angle(
+def _prepare_polygon(
     pts: Sequence[tuple[float, float]],
-    centroid: tuple[float, float],
-    *,
-    degrees: bool,
-) -> float:
-    if not pts:
-        return 0.0
+) -> tuple[Polygon | None, tuple[float, float], float]:
+    if len(pts) < 3:
+        if not pts:
+            return None, (0.0, 0.0), 0.0
+        avg_x = sum(x for x, _ in pts) / len(pts)
+        avg_y = sum(y for _, y in pts) / len(pts)
+        return None, (avg_x, avg_y), 0.0
 
-    cx, cy = centroid
-    sxx = syy = sxy = 0.0
-    for x, y in pts:
-        dx = x - cx
-        dy = y - cy
-        sxx += dx * dx
-        syy += dy * dy
-        sxy += dx * dy
+    poly = Polygon(pts)
+    if poly.is_empty or not poly.is_valid or poly.area <= 1e-6:
+        avg_x = sum(x for x, _ in pts) / len(pts)
+        avg_y = sum(y for _, y in pts) / len(pts)
+        return None, (avg_x, avg_y), 0.0
 
-    if abs(sxy) < 1e-9 and abs(sxx - syy) < 1e-9:
-        return 0.0
+    centroid = poly.centroid.coords[0]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        mrr = poly.minimum_rotated_rectangle
+    coords = list(mrr.exterior.coords)
+    longest = 0.0
+    angle = 0.0
+    for i in range(len(coords) - 1):
+        x1, y1 = coords[i]
+        x2, y2 = coords[i + 1]
+        dx = x2 - x1
+        dy = y2 - y1
+        length = dx * dx + dy * dy
+        if length > longest:
+            longest = length
+            angle = math.degrees(math.atan2(dy, dx))
 
-    angle = 0.5 * math.atan2(2.0 * sxy, sxx - syy)
-    if degrees:
-        return math.degrees(angle)
-    return angle
+    # Normalize to [-90, 90)
+    if angle < -90.0:
+        angle += 180.0
+    elif angle >= 90.0:
+        angle -= 180.0
+
+    return poly, centroid, angle
+
+
+def _extract_segments(geom: BaseGeometry) -> list[tuple[float, float]]:
+    segments: list[tuple[float, float]] = []
+    if geom.is_empty:
+        return segments
+    if isinstance(geom, LineString):
+        coords = list(geom.coords)
+        if len(coords) >= 2:
+            segments.append((coords[0][0], coords[-1][0]))
+        return segments
+    if isinstance(geom, MultiLineString):
+        for line in geom.geoms:
+            segments.extend(_extract_segments(line))
+        return segments
+    if isinstance(geom, GeometryCollection):
+        for part in geom.geoms:
+            segments.extend(_extract_segments(part))
+        return segments
+    return segments
 
 
 @dataclass
@@ -929,28 +951,25 @@ class RemarkableNotebook:
         """Approximate a filled polygon using scanlines."""
 
         pts = [(float(px), float(py)) for px, py in points]
-        if len(pts) < 3:
+        poly, centroid, angle = _prepare_polygon(pts)
+        if poly is None:
             return self
 
         eff = tool or self._tool
         sw = float(max(1, eff.width))
         step = max(1.0, sw * float(spacing_factor))
 
-        centroid = _polygon_centroid(pts)
-        angle = _polygon_principal_angle(pts, centroid, degrees=self._deg)
-
-        local_pts = [(px - centroid[0], py - centroid[1]) for px, py in pts]
+        local = affinity.translate(poly, xoff=-centroid[0], yoff=-centroid[1])
+        local = affinity.rotate(local, -angle, origin=(0.0, 0.0), use_radians=False)
 
         self.tf_push()
         self.tf_translate(*centroid)
         self.tf_rotate(angle)
-        self._fill_polygon_scanlines(local_pts, eff, step)
+        self._fill_polygon_scanlines(local, eff, step)
 
         if cross_hatch:
-            self.tf_push()
-            self.tf_rotate(90.0 if self._deg else math.pi / 2.0)
-            self._fill_polygon_scanlines(local_pts, eff, step)
-            self.tf_pop()
+            rotated = affinity.rotate(local, 90.0, origin=(0.0, 0.0), use_radians=False)
+            self._fill_polygon_scanlines(rotated, eff, step)
 
         self.tf_pop()
 
@@ -964,49 +983,30 @@ class RemarkableNotebook:
 
     def _fill_polygon_scanlines(
         self,
-        pts: Sequence[tuple[float, float]],
+        geom: Polygon,
         eff: Tool,
         step: float,
     ) -> None:
-        if not pts:
+        if geom.is_empty:
             return
 
-        min_y = min(p[1] for p in pts)
-        max_y = max(p[1] for p in pts)
+        stroke_radius = float(max(1, eff.width)) * 0.5
+        offset = geom.buffer(-stroke_radius, join_style=JOIN_STYLE.mitre)
+        if offset.is_empty:
+            offset = geom
+
+        min_x, min_y, max_x, max_y = offset.bounds
         if max_y - min_y <= 0:
             return
 
         y = min_y
-        n = len(pts)
         eps = step * 0.5
         while y <= max_y + eps:
-            intersections: list[float] = []
-            for i in range(n):
-                x1, y1 = pts[i]
-                x2, y2 = pts[(i + 1) % n]
-
-                if y1 == y2:
-                    continue
-
-                ymin = min(y1, y2)
-                ymax = max(y1, y2)
-                if y < ymin or y >= ymax:
-                    continue
-
-                t = (y - y1) / (y2 - y1)
-                intersections.append(x1 + t * (x2 - x1))
-
-            if intersections:
-                intersections.sort()
-                for i in range(0, len(intersections) - 1, 2):
-                    x_start = intersections[i]
-                    x_end = intersections[i + 1]
-                    # Shrink ends by half stroke width to keep round caps inside
-                    r = float(max(1, eff.width)) * 0.5
-                    xs = x_start + r
-                    xe = x_end - r
-                    if xe - xs > 0.1:
-                        self.polyline([(xs, y), (xe, y)], tool=eff)
+            line = LineString([(min_x - 10.0, y), (max_x + 10.0, y)])
+            intersection = offset.intersection(line)
+            for x_start, x_end in _extract_segments(intersection):
+                if x_end - x_start > 0.1:
+                    self.polyline([(x_start, y), (x_end, y)], tool=eff)
 
             y += step
 
